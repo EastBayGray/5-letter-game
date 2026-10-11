@@ -1,0 +1,13 @@
+{
+  "name": "Jotter Race",
+  "short_name": "Jotter Race",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FCF3B8",
+  "theme_color": "#FCF3B8",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

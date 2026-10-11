@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jotter Race</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jotter Race">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FCF3B8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -101,6 +108,7 @@
   .online .status { font-size: 1.45rem; margin: 0 0 6px; color: var(--ink); }
   .is-online .online .status.mine { color: var(--red); }
   .online .status.won { font-size: 1.7rem; color: var(--red); }
+  .online .tally { margin: 6px 0 0; color: var(--pencil); font-size: 1.1rem; }
   .online .codebox { font-size: 1.3rem; letter-spacing: .12em; color: var(--red); }
   .pen-btn.small { font-size: 1.05rem; padding: 2px 10px; }
   .turn-tag { color: #fff; background: var(--red); border-radius: 12px 4px 12px 4px; padding: 0 8px; font-size: 1rem; margin-left: 8px; white-space: nowrap; line-height: 1.4; }
@@ -278,6 +286,7 @@
       </div>
       <p class="err" id="on-err" hidden></p>
     </div>
+    <p class="tally" id="on-tally" hidden></p>
     <div id="on-live" hidden>
       <p class="status" id="on-status"></p>
       <div class="row">
@@ -305,7 +314,7 @@
     <p>Hide takes the crossed-off and circled letters out of the alphabet, leaving only the ones you haven't worked out yet. Show all brings them back.</p>
     <p>Scramble shuffles the letters in the circle so you can spot the word.</p>
     <p>Each word length keeps its own game, so switching length won't lose your page.</p>
-    <p>Play online: pick a length, tap Play online, and share the code. The other person taps Join a game and types it in. Whoever picks their secret word first goes first. Your guesses send themselves once they're a real word, the numbers fill in on their own, and you can change your secret word until the first guess.</p>
+    <p>Play online: pick a length, tap Play online, and share the code. The other person taps Join a game and types it in. Whoever picks their secret word first goes first. Your score against each person is kept on this phone. Your guesses send themselves once they're a real word, the numbers fill in on their own, and you can change your secret word until the first guess.</p>
   </div>
   <div class="alphabet" id="alphabet" role="group" aria-label="Alphabet"></div>
 
@@ -891,6 +900,9 @@
         if (!snap.exists) fail("Can't find a game with that code.");
         var g = snap.data(), players = g.players || {};
         if (mine) return mine;
+        // Same name as a player already in it? That's you on another phone or the home-screen app.
+        var key = name.toLowerCase();
+        for (var seat in players) if (players[seat] && (players[seat].name || '').trim().toLowerCase() === key) return seat;
         if (players.B) fail('That game already has two players.');
         players.B = { name: name, word: '' };
         t.update(ref, { players: players });
@@ -931,7 +943,7 @@
     document.body.classList.remove('is-online');
     el('tag-mine').hidden = el('tag-theirs').hidden = true;
     LEN = root.len; state = root.games[LEN] || (root.games[LEN] = blank(LEN));
-    save(); renderAll(); showPanel('off');
+    save(); renderAll(); showPanel('off'); renderTally('');
   }
   el('on-leave').addEventListener('click', leaveGame);
 
@@ -984,6 +996,32 @@
       lockOnline(v);
     }
     paintStatus(v);
+    if (v.winner && v.them) {
+      root.results = root.results || {};
+      if (!root.results[online.code]) {
+        root.results[online.code] = { opp: v.oppName, won: v.winner === me, at: Date.now() };
+        save();
+      }
+    }
+    renderTally(v.them ? v.oppName : '');
+  }
+
+  // Running score against each person, kept on this phone.
+  function renderTally(only) {
+    var res = root.results || {}, by = {};
+    Object.keys(res).forEach(function (c) {
+      var r = res[c], k = (r.opp || '').trim().toLowerCase();
+      if (!k) return;
+      var t = by[k] || (by[k] = { name: r.opp.trim(), me: 0, them: 0 });
+      if (r.won) t.me++; else t.them++;
+    });
+    var keys = Object.keys(by);
+    if (only) keys = keys.filter(function (k) { return k === only.trim().toLowerCase(); });
+    var tally = el('on-tally');
+    tally.textContent = keys.length ? 'Score: ' + keys.map(function (k) {
+      return 'me ' + by[k].me + ', ' + by[k].name + ' ' + by[k].them;
+    }).join(' · ') : '';
+    tally.hidden = !keys.length;
   }
 
   function lockOnline(v) {
@@ -1058,6 +1096,7 @@
   }
 
   // Coming back to the page, or opening a shared link.
+  renderTally('');
   (function resume() {
     var m = /[?&]g=([A-Za-z]{4})/.exec(location.search);
     var linkCode = m ? m[1].toUpperCase() : '';
