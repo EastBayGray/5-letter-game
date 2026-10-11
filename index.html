@@ -131,13 +131,26 @@
   .found:nth-child(odd) { transform: rotate(-4deg); }
   .found:nth-child(even) { transform: rotate(3deg) translateY(3px); }
   .side { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .pen-btn.small { font-size: 1.05rem; padding: 0 10px; margin-left: auto; line-height: 1.6; }
+  .pen-btn[aria-pressed="true"] { color: var(--red); border-color: var(--red); }
+  .focus .key.out, .focus .key.in { display: none; }
+  .zone.orbiting { margin-top: 30px; margin-bottom: 44px; }
+  .zone.orbiting .circle { width: 78%; justify-self: center; }
+  .orbit {
+    position: absolute; transform: translate(-50%, -50%);
+    font-size: 1.3rem; line-height: 1; color: var(--ink-soft);
+    background: none; border: 0; padding: 4px; cursor: pointer;
+    transition: left .4s ease, top .4s ease;
+  }
+  .orbit:focus-visible { outline: 2px dashed var(--ink-soft); }
+  @media (prefers-reduced-motion: reduce) { .orbit { transition: none; } }
   .pen-btn {
     font-size: 1.3rem; color: var(--ink); background: none; cursor: pointer; padding: 4px 12px;
     border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   }
   .pen-btn:active { transform: translateY(1px); }
   .pen-btn:focus-visible, .found:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 3px; }
-  .bin { width: 54px; height: 60px; display: grid; place-items: center; border-radius: 8px; background: none; border: 0; padding: 0; cursor: pointer; }
+  .xbin { width: 54px; height: 60px; display: grid; place-items: center; border-radius: 8px; background: none; border: 0; padding: 0; cursor: pointer; }
   .bin:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 3px; }
   .bin:active { transform: translateY(1px); }
   .bin svg { width: 44px; height: 52px; }
@@ -226,11 +239,13 @@
   <div class="head">
     <h2>Alphabet</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
+    <button class="pen-btn small" id="focus" type="button" aria-pressed="false">Hide</button>
   </div>
   <div class="note" id="note-alpha" hidden>
     <p>Tap a letter once to cross it off, twice to put it in the circle, and a third time to clear it.</p>
-    <p>You can also drag a letter onto the circle or the bin.</p>
-    <p>Tap a letter in the circle to take it out. Scramble shuffles the circle letters so you can spot the word. Tapping the bin empties the circle.</p>
+    <p>You can also drag a letter straight onto the circle. Tap a letter in the circle to take it out.</p>
+    <p>Hide takes the crossed-off and circled letters out of the alphabet, leaving only the ones you haven't worked out yet. Show all brings them back.</p>
+    <p>Scramble shuffles the letters in the circle so you can spot the word.</p>
     <p>Each word length keeps its own game, so switching length won't lose your page.</p>
   </div>
   <div class="alphabet" id="alphabet" role="group" aria-label="Alphabet"></div>
@@ -243,10 +258,6 @@
     </div>
     <div class="side">
       <button class="pen-btn" id="scramble" type="button">Scramble</button>
-      <button type="button" class="bin" id="bin" data-drop="out" aria-label="Empty the circle">
-        <svg viewBox="0 0 44 52" aria-hidden="true"><path d="M6 12 H38 M17 12 V7 H27 V12 M9 12 L12 48 H32 L35 12 M17 19 L18 41 M22 19 V41 M27 19 L26 41"/></svg>
-      </button>
-      <span class="bin-label">bin</span>
     </div>
   </div>
 
@@ -314,7 +325,6 @@
 
   var alphabet = document.getElementById('alphabet');
   var circle = document.getElementById('circle');
-  var bin = document.getElementById('bin');
 
   // Info notes
   document.querySelectorAll('.info').forEach(function (b) {
@@ -385,6 +395,35 @@
     save(); renderMarks();
   }
 
+  var orbitOrder = LETTERS.slice();
+  var focusBtn = document.getElementById('focus');
+  var zone = circle.parentNode;
+  function focusOn() { return !!root.focus; }
+  focusBtn.addEventListener('click', function () {
+    root.focus = !root.focus; save(); renderMarks();
+  });
+
+  function renderOrbit() {
+    circle.querySelectorAll('.orbit').forEach(function (n) { n.remove(); });
+    zone.classList.remove('orbiting');
+    return;
+    var on = focusOn();
+    zone.classList.toggle('orbiting', on);
+    if (!on) return;
+    var open = orbitOrder.filter(function (l) { return !state.marks[l]; });
+    var n = open.length;
+    open.forEach(function (l, i) {
+      var t = -Math.PI / 2 + (i / n) * Math.PI * 2;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'orbit'; b.textContent = l;
+      b.style.left = (50 + Math.cos(t) * 58) + '%';
+      b.style.top = (50 + Math.sin(t) * 68) + '%';
+      b.setAttribute('aria-label', 'Cross off ' + l);
+      b.addEventListener('click', function () { setMark(l, 'out'); });
+      circle.appendChild(b);
+    });
+  }
+
   function renderAlphabet() {
     alphabet.innerHTML = '';
     LETTERS.forEach(function (l) {
@@ -424,6 +463,10 @@
       circle.appendChild(f);
     });
     document.querySelectorAll('#mine .cell').forEach(paintCell);
+    alphabet.classList.toggle('focus', focusOn());
+    focusBtn.setAttribute('aria-pressed', String(focusOn()));
+    focusBtn.textContent = focusOn() ? 'Show all' : 'Hide';
+    renderOrbit();
   }
 
   // Alphabet: tap cycles plain -> crossed off -> circled -> plain; drag drops onto circle or bin.
@@ -464,19 +507,16 @@
     });
   }
 
-  bin.addEventListener('click', function () {
-    state.order.forEach(function (l) { delete state.marks[l]; });
-    state.order = []; save(); renderMarks();
-  });
 
   document.getElementById('scramble').addEventListener('click', function () {
     var a = state.order.slice();
-    if (a.length < 2) return;
     var before = a.join('');
     for (var t = 0; t < 6 && a.join('') === before; t++) {
       for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
     }
-    state.order = a; save(); renderMarks();
+    state.order = a;
+    for (var k = orbitOrder.length - 1; k > 0; k--) { var m = Math.floor(Math.random() * (k + 1)); var y = orbitOrder[k]; orbitOrder[k] = orbitOrder[m]; orbitOrder[m] = y; }
+    save(); renderMarks();
   });
 
   // My word
