@@ -16,21 +16,21 @@
     --ink-soft: #4B64A8;
     --red: #C2302A;
     --pencil: #6B6A5E;
+    --note: #FFFDF0;
     --line: 34px;
     --hand: 'Patrick Hand', 'Comic Sans MS', 'Chalkboard SE', cursive;
-    --print: 'Patrick Hand', 'Comic Sans MS', 'Chalkboard SE', cursive;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper: #1B2233; --rule: #2E3B57; --margin: #7A3A44;
+      --paper: #1B2233; --rule: #2E3B57; --margin: #7A3A44; --note: #232C42;
       --ink: #E8E2C4; --ink-soft: #B9B39A; --red: #FF7A6E; --pencil: #8D8C80;
     }
   }
   :root[data-theme="dark"] {
-    --paper: #1B2233; --rule: #2E3B57; --margin: #7A3A44;
+    --paper: #1B2233; --rule: #2E3B57; --margin: #7A3A44; --note: #232C42;
     --ink: #E8E2C4; --ink-soft: #B9B39A; --red: #FF7A6E; --pencil: #8D8C80;
   }
   *, *::before, *::after { box-sizing: inherit; }
@@ -38,16 +38,17 @@
   body {
     background: var(--paper);
     color: var(--ink);
-    font-family: var(--print);
+    font-family: var(--hand);
     font-size: 20px;
     line-height: var(--line);
     min-height: 100vh;
   }
+  button, input, output { font-family: var(--hand); }
   .sheet {
     position: relative;
     max-width: 620px;
     margin: 0 auto;
-    padding: calc(var(--line) * 1) 18px calc(var(--line) * 2) 64px;
+    padding: calc(var(--line) * 1) 16px calc(var(--line) * 2) 62px;
     background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px), var(--rule) var(--line));
     background-position: 0 calc(var(--line) * 2.5);
     background-repeat: no-repeat;
@@ -60,47 +61,54 @@
   .sheet::before { left: 46px; }
   .sheet::after { left: 50px; }
 
-  h1 {
-    font-family: var(--hand);
-    font-weight: 400;
-    font-size: clamp(2.3rem, 9vw, 3.3rem);
-    line-height: 1;
-    margin: 0 0 6px;
-  }
-  .underline { display: block; width: 92%; height: 14px; margin: 0 0 calc(var(--line) - 6px); }
+  h1 { font-weight: 400; font-size: clamp(2.1rem, 8.5vw, 3.1rem); line-height: 1.05; margin: 0 0 6px; }
+  .underline { display: block; width: 92%; height: 14px; margin: 0 0 8px; }
   .underline path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
 
-  h2 {
-    font-family: var(--hand);
-    font-weight: 400;
-    font-size: 1.75rem;
-    line-height: var(--line);
-    margin: var(--line) 0 0;
+  .head { display: flex; align-items: center; gap: 10px; margin: var(--line) 0 0; }
+  h2 { font-weight: 400; font-size: 1.75rem; line-height: var(--line); margin: 0; }
+  .info {
+    width: 28px; height: 28px; flex: none; padding: 0; cursor: pointer;
+    font-size: 1.15rem; line-height: 1; color: var(--ink-soft); background: none;
+    border: 2px solid var(--ink-soft); border-radius: 50% 46% 52% 48%;
   }
-  .hint { color: var(--pencil); font-size: 1rem; margin: 0; }
+  .info[aria-expanded="true"] { color: var(--red); border-color: var(--red); }
+  .info:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 2px; }
+  .note {
+    margin: 8px 0 4px; padding: 8px 14px; font-size: 1.05rem; line-height: 1.4;
+    background: var(--note); color: var(--ink);
+    border: 2px solid var(--ink-soft); border-radius: 4px 14px 6px 12px / 12px 6px 14px 4px;
+    box-shadow: 3px 4px 0 rgba(0,0,0,.08);
+  }
+  .note[hidden] { display: none; }
+  .note p { margin: 0 0 6px; }
+  .note p:last-child { margin: 0; }
 
-  /* Hand-drawn marks shared by alphabet keys and guess letters */
+  /* Word-length tabs */
+  .lengths { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+  .lengths .lbl { color: var(--pencil); font-size: 1rem; margin-right: 6px; }
+  .len {
+    position: relative; width: 40px; height: 40px; padding: 0; cursor: pointer;
+    font-size: 1.6rem; color: var(--ink-soft); background: none; border: 0;
+  }
+  .len[aria-checked="true"] { color: var(--ink); }
+  .len:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 2px; }
+
+  /* Hand-drawn marks shared by alphabet keys, tabs and guess letters */
   .mark { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; overflow: visible; }
   .mark path { fill: none; stroke-width: 2.6; stroke-linecap: round; }
   .out .strike { opacity: 1; }
   .out .strike path { stroke: var(--red); }
-  .in .ring { opacity: 1; }
-  .in .ring path { stroke: var(--ink); }
+  .in .ring, .len[aria-checked="true"] .ring { opacity: 1; }
+  .in .ring path, .len .ring path { stroke: var(--ink); }
 
   /* Alphabet */
   .alphabet { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px 2px; margin-top: 8px; }
   @media (max-width: 420px) { .alphabet { grid-template-columns: repeat(7, 1fr); } }
   .key {
-    position: relative;
-    font-family: var(--print);
-    font-size: 1.6rem;
-    color: var(--ink);
-    background: none; border: 0; padding: 0;
-    height: 46px;
-    cursor: pointer;
-    touch-action: none;
-    user-select: none; -webkit-user-select: none;
-    border-radius: 50%;
+    position: relative; font-size: 1.6rem; color: var(--ink);
+    background: none; border: 0; padding: 0; height: 46px; cursor: pointer;
+    touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 50%;
   }
   .key:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 2px; }
   .key.out { color: var(--pencil); }
@@ -115,18 +123,16 @@
   .circle > svg.loop { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .circle > svg.loop path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
   .circle.over > svg.loop path { stroke: var(--red); stroke-width: 3.2; }
-  .empty { color: var(--pencil); font-size: 1rem; text-align: center; line-height: 1.3; }
+  .empty { color: var(--pencil); font-size: 1rem; text-align: center; line-height: 1.3; margin: 0; }
   .found {
-    font-family: var(--hand); font-weight: 400; font-size: 2.6rem; line-height: 1;
-    background: none; border: 0; color: var(--ink); cursor: pointer; padding: 0 4px;
-    transition: transform .35s ease;
+    font-size: 2.4rem; line-height: 1; background: none; border: 0; color: var(--ink);
+    cursor: pointer; padding: 0 4px; transition: transform .35s ease;
   }
   .found:nth-child(odd) { transform: rotate(-4deg); }
   .found:nth-child(even) { transform: rotate(3deg) translateY(3px); }
   .side { display: flex; flex-direction: column; gap: 12px; align-items: center; }
   .pen-btn {
-    font-family: var(--hand); font-weight: 400; font-size: 1.35rem; color: var(--ink);
-    background: none; cursor: pointer; padding: 4px 12px;
+    font-size: 1.3rem; color: var(--ink); background: none; cursor: pointer; padding: 4px 12px;
     border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   }
   .pen-btn:active { transform: translateY(1px); }
@@ -140,10 +146,10 @@
   .bin-label { font-size: .9rem; color: var(--pencil); line-height: 1; margin-top: -6px; }
 
   /* My word */
-  .myword { display: flex; gap: 12px; margin-top: 6px; }
+  .myword { display: flex; gap: 8px; margin-top: 6px; }
   .slot {
-    width: 44px; height: var(--line);
-    font-family: var(--hand); font-weight: 400; font-size: 2.2rem; text-align: center;
+    flex: 1; min-width: 0; max-width: 44px; height: var(--line);
+    font-size: 2.1rem; text-align: center;
     color: var(--ink); background: none; border: 0; border-bottom: 3px solid var(--ink);
     border-radius: 0; padding: 0; text-transform: uppercase; caret-color: var(--red);
   }
@@ -151,37 +157,41 @@
 
   /* Guess lists */
   .lines { list-style: none; margin: 0; padding: 0; }
-  .lines li { display: flex; align-items: center; gap: 14px; height: var(--line); }
-  .lines .n { width: 22px; color: var(--pencil); font-size: 1rem; text-align: right; flex: none; }
-  .cells { display: flex; gap: 2px; flex: none; }
-  .cell { position: relative; width: 32px; height: var(--line); }
+  .lines li { display: flex; align-items: center; gap: 12px; height: var(--line); }
+  .lines .n {
+    width: 24px; flex: none; color: var(--pencil); font-size: 1rem; text-align: right;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+  .cells { display: flex; gap: 2px; flex: 0 1 auto; min-width: 0; }
+  .cell { position: relative; flex: 1 1 32px; min-width: 0; max-width: 32px; width: 32px; height: var(--line); }
   .cell input {
     width: 100%; height: 100%;
-    font-family: var(--hand); font-weight: 400; font-size: 1.9rem; text-align: center;
+    font-size: var(--cell-font, 1.9rem); text-align: center;
     color: var(--ink); background: none; border: 0; border-bottom: 2px solid var(--rule);
     border-radius: 0; padding: 0; text-transform: uppercase; caret-color: var(--red);
   }
+  #mine .cell input[readonly] { cursor: pointer; }
   .cell input:focus { outline: none; border-bottom-color: var(--red); }
   .cell.out input { color: var(--pencil); }
   .cell.hit input { color: var(--red); }
   .cell .mark { inset: 2px 1px 4px 1px; width: auto; height: auto; }
   .score {
-    width: 34px; height: 30px; flex: none; font-family: var(--hand); font-weight: 400; font-size: 1.7rem; text-align: center;
+    width: 34px; height: 30px; flex: none; font-size: 1.6rem; text-align: center;
     line-height: 26px; color: var(--red); background: none; padding: 0; caret-color: var(--red);
     border: 2px solid var(--ink-soft); border-radius: 50% 45% 55% 48%;
   }
   input.score:focus { outline: none; border-color: var(--red); }
   .score.auto { border-style: dashed; }
-  .colhead { display: flex; gap: 14px; color: var(--pencil); font-size: 1rem; }
-  .colhead span:first-child { width: 22px; }
-  .colhead span:nth-child(2) { width: 168px; }
+  .colhead { display: flex; gap: 12px; color: var(--pencil); font-size: 1rem; }
+  .colhead span:first-child { width: 24px; }
+  .colhead span:nth-child(2) { width: var(--word-w, 168px); }
   .add { margin-top: 8px; }
 
   footer { margin-top: calc(var(--line) * 2); display: flex; gap: 14px; flex-wrap: wrap; }
 
   .ghost {
     position: fixed; z-index: 10; pointer-events: none;
-    font-family: var(--hand); font-weight: 400; font-size: 2.6rem; color: var(--red);
+    font-size: 2.6rem; color: var(--red);
     transform: translate(-50%, -60%) rotate(-6deg);
   }
   @media (prefers-reduced-motion: reduce) { .found { transition: none; } }
@@ -189,13 +199,29 @@
 </head>
 <body>
 <main class="sheet">
-  <h1>The Five-Letter Word Game</h1>
+  <h1 id="title">The Five-Letter Word Game</h1>
   <svg class="underline" viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 9 C 60 4, 120 12, 180 7 S 260 5, 298 8"/></svg>
+  <div class="lengths" id="lengths" role="radiogroup" aria-label="Letters in the word">
+    <span class="lbl">Letters:</span>
+  </div>
 
-  <p class="hint">Tap a letter once to cross it off, twice to put it in the circle. Or drag it to the circle or the bin.</p>
+  <div class="head">
+    <h2>My word</h2>
+  </div>
+  <div class="myword" id="myword"></div>
+
+  <div class="head">
+    <h2>Alphabet</h2>
+    <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
+  </div>
+  <div class="note" id="note-alpha" hidden>
+    <p>Tap a letter once to cross it off, twice to put it in the circle, and a third time to clear it.</p>
+    <p>You can also drag a letter onto the circle or the bin.</p>
+    <p>Tap a letter in the circle to take it out. Scramble shuffles the circle letters so you can spot the word. Tapping the bin empties the circle.</p>
+    <p>Each word length keeps its own game, so switching length won't lose your page.</p>
+  </div>
   <div class="alphabet" id="alphabet" role="group" aria-label="Alphabet"></div>
 
-  <h2>Letters in their word</h2>
   <div class="zone">
     <div class="circle" id="circle" data-drop="in">
       <svg class="loop" viewBox="0 0 210 100" preserveAspectRatio="none" aria-hidden="true">
@@ -211,16 +237,27 @@
     </div>
   </div>
 
-  <h2>My word</h2>
-  <div class="myword" id="myword"></div>
-
-  <h2>My guesses</h2>
+  <div class="head">
+    <h2>My guesses</h2>
+    <button class="info" type="button" aria-expanded="false" aria-controls="note-mine" aria-label="How my guesses work">i</button>
+  </div>
+  <div class="note" id="note-mine" hidden>
+    <p>Type each word you ask them, then the number they tell you.</p>
+    <p>Tap a letter in a guess to cross it off. Tap again to circle it, and again to clear it. The alphabet updates too, and the mark shows in every guess with that letter.</p>
+    <p>Typo? Backspace while typing, or tap the line number to clear that line.</p>
+  </div>
   <div class="colhead"><span></span><span>word</span><span>how many</span></div>
   <ol class="lines" id="mine"></ol>
   <button class="pen-btn add" type="button" data-add="mine">Add a line</button>
 
-  <h2>The words they've asked me</h2>
-  <p class="hint">The number fills itself in from my word.</p>
+  <div class="head">
+    <h2>The words they've asked me</h2>
+    <button class="info" type="button" aria-expanded="false" aria-controls="note-theirs" aria-label="How this section works">i</button>
+  </div>
+  <div class="note" id="note-theirs" hidden>
+    <p>Type the word they ask you. The number of its letters that are in my word fills itself in, and those letters turn red.</p>
+    <p>Tap the line number to clear a line.</p>
+  </div>
   <div class="colhead"><span></span><span>word</span><span>I say</span></div>
   <ol class="lines" id="theirs"></ol>
   <button class="pen-btn add" type="button" data-add="theirs">Add a line</button>
@@ -232,18 +269,30 @@
 
 <script>
 (function () {
-  var KEY = 'five-letter-word-game-v1';
+  var KEY = 'five-letter-word-game-v2';
+  var OLD_KEY = 'five-letter-word-game-v1';
   var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  var NAMES = { 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 7: 'Seven', 8: 'Eight' };
   var START_ROWS = 8;
 
-  function blank() {
-    return { marks: {}, order: [], myword: ['', '', '', '', ''],
+  function blank(len) {
+    return { marks: {}, order: [], myword: Array(len).fill(''),
       mine: Array.from({ length: START_ROWS }, function () { return { w: '', n: '' }; }),
       theirs: Array.from({ length: START_ROWS }, function () { return { w: '', n: '' }; }) };
   }
-  var state = blank();
-  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && saved.mine) state = saved; } catch (e) {}
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var root = { len: 5, games: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && saved.games) root = saved;
+    else {
+      var old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
+      if (old && old.mine) root.games[5] = old;
+    }
+  } catch (e) {}
+  var LEN = root.len;
+  var state = root.games[LEN] || (root.games[LEN] = blank(LEN));
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(root)); } catch (e) {} }
 
   var strike = '<svg class="mark strike" viewBox="0 0 40 46" preserveAspectRatio="none" aria-hidden="true"><path d="M7 37 L33 9"/><path d="M9 33 L31 11"/></svg>';
   var ring = '<svg class="mark ring" viewBox="0 0 40 46" preserveAspectRatio="none" aria-hidden="true"><path d="M22 5 C 34 5, 38 17, 37 25 C 36 37, 27 42, 19 41 C 9 40, 3 32, 4 22 C 5 12, 12 5, 25 7"/></svg>';
@@ -252,21 +301,58 @@
   var circle = document.getElementById('circle');
   var bin = document.getElementById('bin');
 
-  // How many letters two words share (each letter in my word can only be matched once).
+  // Info notes
+  document.querySelectorAll('.info').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var note = document.getElementById(b.getAttribute('aria-controls'));
+      var open = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(open));
+      note.hidden = !open;
+    });
+  });
+
+  // Word-length tabs
+  var lengths = document.getElementById('lengths');
+  [3, 4, 5, 6, 7, 8].forEach(function (n) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'len'; b.dataset.len = n;
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-label', n + ' letters');
+    b.innerHTML = '<span>' + n + '</span>' + ring;
+    b.addEventListener('click', function () { setLength(n); });
+    lengths.appendChild(b);
+  });
+  function paintLength() {
+    lengths.querySelectorAll('.len').forEach(function (b) {
+      b.setAttribute('aria-checked', String(+b.dataset.len === LEN));
+    });
+    var t = 'The ' + NAMES[LEN] + '-Letter Word Game';
+    document.getElementById('title').textContent = t;
+    document.title = t;
+    var cellW = LEN >= 7 ? 26 : 32;
+    document.documentElement.style.setProperty('--cell-font', LEN >= 7 ? '1.55rem' : '1.9rem');
+    document.querySelectorAll('.cell').forEach(function (c) { c.style.maxWidth = cellW + 'px'; c.style.width = cellW + 'px'; });
+    document.documentElement.style.setProperty('--word-w', (cellW * LEN + 2 * (LEN - 1)) + 'px');
+  }
+  function setLength(n) {
+    if (n === LEN) return;
+    LEN = n; root.len = n;
+    state = root.games[n] || (root.games[n] = blank(n));
+    save(); renderAll();
+  }
+
+  // Letters two words share; each letter of my word can only be matched once.
   function common(a, b) {
-    if (a.length !== 5 || b.length !== 5) return '';
+    if (a.length !== LEN || b.length !== LEN) return '';
     var counts = {};
     b.split('').forEach(function (c) { counts[c] = (counts[c] || 0) + 1; });
     var n = 0;
     a.split('').forEach(function (c) { if (counts[c] > 0) { n++; counts[c]--; } });
     return String(n);
   }
-
-  // Which letters of a word match my word (again, each letter of my word matches once).
   function hits(w, mine) {
     var counts = {}, res = [];
     mine.split('').forEach(function (c) { if (c) counts[c] = (counts[c] || 0) + 1; });
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < LEN; i++) {
       var c = w.charAt(i);
       res.push(!!c && counts[c] > 0);
       if (res[i]) counts[c]--;
@@ -278,6 +364,7 @@
     li.querySelectorAll('.cell').forEach(function (cell, i) { cell.classList.toggle('hit', h[i]); });
   }
 
+  function nextMark(m) { return m === '' ? 'out' : m === 'out' ? 'in' : ''; }
   function setMark(letter, mark) {
     var prev = state.marks[letter] || '';
     if (mark) state.marks[letter] = mark; else delete state.marks[letter];
@@ -303,9 +390,6 @@
     cell.classList.toggle('out', m === 'out');
     cell.classList.toggle('in', m === 'in');
   }
-  function paintGuesses() {
-    document.querySelectorAll('#mine .cell').forEach(paintCell);
-  }
 
   function renderMarks() {
     alphabet.querySelectorAll('.key').forEach(function (b) {
@@ -317,7 +401,7 @@
     circle.querySelectorAll('.found, .empty').forEach(function (n) { n.remove(); });
     if (!state.order.length) {
       var e = document.createElement('p'); e.className = 'empty';
-      e.textContent = 'Letters you know are in their word go here';
+      e.textContent = 'Letters you know are in their word';
       circle.appendChild(e);
     }
     state.order.forEach(function (l) {
@@ -327,10 +411,10 @@
       f.addEventListener('click', function () { setMark(l, ''); });
       circle.appendChild(f);
     });
-    paintGuesses();
+    document.querySelectorAll('#mine .cell').forEach(paintCell);
   }
 
-  // Tap cycles: plain -> crossed off -> in circle -> plain. Drag drops onto circle or bin.
+  // Alphabet: tap cycles plain -> crossed off -> circled -> plain; drag drops onto circle or bin.
   function attachDrag(btn) {
     var start = null, ghost = null, dragged = false, target = null;
     btn.addEventListener('pointerdown', function (ev) {
@@ -364,8 +448,7 @@
     btn.addEventListener('pointercancel', end);
     btn.addEventListener('click', function () {
       if (btn.dataset.skipClick) { delete btn.dataset.skipClick; return; }
-      var m = state.marks[btn.dataset.letter] || '';
-      setMark(btn.dataset.letter, m === '' ? 'out' : m === 'out' ? 'in' : '');
+      setMark(btn.dataset.letter, nextMark(state.marks[btn.dataset.letter] || ''));
     });
   }
 
@@ -384,14 +467,14 @@
     state.order = a; save(); renderMarks();
   });
 
-  // My word: five underscores, auto-advance
+  // My word
   var myword = document.getElementById('myword');
   function renderMyWord() {
     myword.innerHTML = '';
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < LEN; i++) {
       (function (i) {
         var s = document.createElement('input');
-        s.className = 'slot'; s.maxLength = 1; s.value = state.myword[i];
+        s.className = 'slot'; s.maxLength = 2; s.value = state.myword[i] || '';
         s.autocapitalize = 'characters'; s.autocomplete = 'off'; s.spellcheck = false;
         s.setAttribute('aria-label', 'My word, letter ' + (i + 1));
         s.addEventListener('input', function () {
@@ -422,60 +505,79 @@
   function renderList(name) {
     var ol = document.getElementById(name);
     ol.innerHTML = '';
+    var isMine = name === 'mine';
     state[name].forEach(function (row, idx) {
       var li = document.createElement('li');
-      li.innerHTML = '<span class="n">' + (idx + 1) + '</span>';
+      var num = document.createElement('button');
+      num.type = 'button'; num.className = 'n'; num.textContent = idx + 1;
+      num.setAttribute('aria-label', 'Clear line ' + (idx + 1));
+      li.appendChild(num);
       var cells = document.createElement('div'); cells.className = 'cells';
       var inputs = [];
       var sc;
 
       function sync() {
         row.w = inputs.map(function (x) { return x.value; }).join('');
-        if (name === 'theirs') { row.n = common(row.w, state.myword.join('')); sc.textContent = row.n; paintTheirs(li, row); }
+        if (!isMine) { row.n = common(row.w, state.myword.join('')); sc.textContent = row.n; paintTheirs(li, row); }
         save();
       }
+      function lock(inp) { if (isMine) inp.readOnly = !!inp.value; }
 
-      for (var i = 0; i < 5; i++) {
+      for (var i = 0; i < LEN; i++) {
         (function (i) {
           var cell = document.createElement('span'); cell.className = 'cell';
           var inp = document.createElement('input');
-          inp.maxLength = 5; inp.value = row.w.charAt(i);
+          inp.maxLength = 2; inp.value = row.w.charAt(i);
           inp.autocapitalize = 'characters'; inp.autocomplete = 'off'; inp.spellcheck = false;
           inp.setAttribute('aria-label', 'Word ' + (idx + 1) + ', letter ' + (i + 1));
+          lock(inp);
           inp.addEventListener('input', function () {
-            var typed = inp.value.replace(/[^a-z]/gi, '').toUpperCase();
-            if (typed.length > 1 && i < 4) {
-              // pasted or fast-typed: spread across the next boxes
-              var chars = typed.split('');
-              var keep = inp.value.length > 1 && typed.charAt(0) === row.w.charAt(i) ? chars.slice(1) : chars;
-              for (var k = 0; k < keep.length && i + k < 5; k++) { inputs[i + k].value = keep[k]; paintCell(inputs[i + k].parentNode); }
-              var next = Math.min(i + keep.length, 4);
-              sync();
-              if (i + keep.length >= 5) { if (name === 'mine') sc.focus(); } else inputs[next].focus();
-              return;
-            }
-            inp.value = typed.slice(-1);
-            if (name === 'mine') paintCell(cell);
+            inp.value = inp.value.replace(/[^a-z]/gi, '').slice(-1).toUpperCase();
+            lock(inp);
+            if (isMine) paintCell(cell);
             sync();
-            if (inp.value) { if (i < 4) inputs[i + 1].focus(); else if (name === 'mine') sc.focus(); }
+            if (inp.value) { if (i < LEN - 1) inputs[i + 1].focus(); else if (isMine) sc.focus(); else inp.blur(); }
           });
           inp.addEventListener('keydown', function (e) {
-            if (e.key === 'Backspace' && !inp.value && i > 0) { inputs[i - 1].focus(); }
+            if (e.key !== 'Backspace') return;
+            if (inp.readOnly) { e.preventDefault(); inp.value = ''; lock(inp); paintCell(cell); sync(); return; }
+            if (!inp.value && i > 0) {
+              e.preventDefault();
+              var prev = inputs[i - 1];
+              prev.value = ''; lock(prev); if (isMine) paintCell(prev.parentNode); sync();
+              prev.focus();
+            }
           });
+          if (isMine) {
+            // A tap on a written letter marks it, just like the alphabet.
+            inp.addEventListener('click', function () {
+              if (!inp.readOnly || !inp.value) return;
+              inp.blur();
+              setMark(inp.value, nextMark(state.marks[inp.value] || ''));
+            });
+          }
           cell.appendChild(inp);
-          if (name === 'mine') cell.insertAdjacentHTML('beforeend', strike + ring);
+          if (isMine) cell.insertAdjacentHTML('beforeend', strike + ring);
           cells.appendChild(cell);
           inputs.push(inp);
         })(i);
       }
 
-      if (name === 'mine') {
+      if (isMine) {
         sc = document.createElement('input');
-        sc.className = 'score'; sc.maxLength = 1; sc.inputMode = 'numeric'; sc.value = row.n;
-        sc.setAttribute('aria-label', 'Number for word ' + (idx + 1) + ', 0 to 5');
+        sc.className = 'score'; sc.maxLength = 2; sc.inputMode = 'numeric'; sc.value = row.n;
+        sc.setAttribute('aria-label', 'Number for word ' + (idx + 1) + ', 0 to ' + LEN);
         sc.addEventListener('input', function () {
-          sc.value = sc.value.replace(/[^0-5]/g, '').slice(-1);
+          var v = sc.value.replace(/[^0-9]/g, '').slice(-1);
+          sc.value = v && +v <= LEN ? v : '';
           row.n = sc.value; save();
+        });
+        sc.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace' && !sc.value) {
+            e.preventDefault();
+            var last = inputs[LEN - 1];
+            last.value = ''; lock(last); paintCell(last.parentNode); sync(); last.focus();
+          }
         });
       } else {
         sc = document.createElement('output');
@@ -484,9 +586,17 @@
         row.n = common(row.w, state.myword.join(''));
         sc.textContent = row.n;
       }
+
+      num.addEventListener('click', function () {
+        inputs.forEach(function (x) { x.value = ''; lock(x); if (isMine) paintCell(x.parentNode); });
+        if (isMine) { sc.value = ''; row.n = ''; }
+        sync();
+        inputs[0].focus();
+      });
+
       li.appendChild(cells); li.appendChild(sc);
       ol.appendChild(li);
-      if (name === 'mine') cells.querySelectorAll('.cell').forEach(paintCell);
+      if (isMine) cells.querySelectorAll('.cell').forEach(paintCell);
       else paintTheirs(li, row);
     });
   }
@@ -494,18 +604,18 @@
   document.querySelectorAll('[data-add]').forEach(function (b) {
     b.addEventListener('click', function () {
       var name = b.dataset.add;
-      state[name].push({ w: '', n: '' }); save(); renderList(name);
+      state[name].push({ w: '', n: '' }); save(); renderList(name); paintLength();
       var rows = document.getElementById(name).querySelectorAll('li');
-      rows[rows.length - 1].querySelector('input').focus();
+      rows[rows.length - 1].querySelector('.cell input').focus();
     });
   });
 
   document.getElementById('reset').addEventListener('click', function () {
-    state = blank(); save(); renderAll();
+    state = root.games[LEN] = blank(LEN); save(); renderAll();
     window.scrollTo(0, 0);
   });
 
-  function renderAll() { renderMyWord(); renderList('mine'); renderList('theirs'); renderMarks(); }
+  function renderAll() { renderMyWord(); renderList('mine'); renderList('theirs'); renderMarks(); paintLength(); }
   renderAlphabet();
   renderAll();
 })();
