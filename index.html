@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Five-Letter Word Game</title>
+<title>Jotter Race</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -61,8 +61,8 @@
   .sheet::before { left: 46px; }
   .sheet::after { left: 50px; }
 
-  h1 { font-weight: 400; font-size: clamp(2.1rem, 8.5vw, 3.1rem); line-height: 1.05; margin: 0 0 6px; }
-  .underline { display: block; width: 92%; height: 14px; margin: 0 0 8px; }
+  h1 { font-weight: 400; font-size: clamp(3rem, 13vw, 4.2rem); line-height: 1; margin: 0 0 2px; letter-spacing: .02em; }
+  .underline { display: block; width: 70%; max-width: 340px; height: 14px; margin: 0 0 8px; }
   .underline path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
 
   .head { display: flex; align-items: center; gap: 10px; margin: var(--line) 0 0; }
@@ -85,10 +85,10 @@
   .note p:last-child { margin: 0; }
 
   /* Word-length tabs */
-  .lengths { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
-  .lengths .lbl { color: var(--pencil); font-size: 1rem; margin-right: 6px; }
+  .lengths { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin-top: 2px; }
+  .lengths .lbl { color: var(--pencil); font-size: 1rem; margin-right: 4px; }
   .len {
-    position: relative; width: 40px; height: 40px; padding: 0; cursor: pointer;
+    position: relative; width: 36px; height: 40px; padding: 0; cursor: pointer;
     font-size: 1.6rem; color: var(--ink-soft); background: none; border: 0;
   }
   .len[aria-checked="true"] { color: var(--ink); }
@@ -187,6 +187,17 @@
   .colhead span:nth-child(2) { width: var(--word-w, 168px); }
   .add { margin-top: 8px; }
 
+  .head, .sheet > footer { position: relative; }
+  .doodle { position: absolute; pointer-events: none; opacity: .62; }
+  .doodle * { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .doodle .dot { fill: currentColor; stroke: none; }
+  .biro-blue { color: #2340A0; } .biro-red { color: #C2302A; } .biro-green { color: #2E7D4F; } .biro-black { color: #2B2B2B; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .biro-blue { color: #8FA8F0; } :root:not([data-theme="light"]) .biro-black { color: #D8D3BC; } :root:not([data-theme="light"]) .biro-green { color: #7CCB9C; } }
+  :root[data-theme="dark"] .biro-blue { color: #8FA8F0; } :root[data-theme="dark"] .biro-black { color: #D8D3BC; } :root[data-theme="dark"] .biro-green { color: #7CCB9C; }
+  .in-margin { left: -59px; width: 34px; height: 50px; top: -4px; }
+  .cactus { right: 10px; top: 8px; width: 54px; height: 100px; transform: rotate(4deg); }
+  .corner-flower { right: 4px; top: -8px; width: 40px; height: 58px; transform: rotate(-10deg); }
+  .corner-flower.second { right: 40px; top: 2px; width: 30px; height: 44px; transform: rotate(12deg); }
   footer { margin-top: calc(var(--line) * 2); display: flex; gap: 14px; flex-wrap: wrap; }
 
   .ghost {
@@ -199,13 +210,15 @@
 </head>
 <body>
 <main class="sheet">
-  <h1 id="title">The Five-Letter Word Game</h1>
+  <svg class="doodle cactus biro-green" viewBox="0 0 60 110" aria-hidden="true"><path d="M24 80 L24 22 C 24 10, 36 10, 36 22 L36 80"/><path d="M24 54 L16 54 C 10 54, 9 50, 9 44 L9 32 C 9 26, 16 26, 16 32 L16 46 L24 46"/><path d="M36 44 L43 44 L43 26 C 43 20, 50 20, 50 26 L50 42 C 50 50, 46 52, 42 52 L36 52"/><path d="M30 20 L30 76"/><path d="M28 28 L25 27 M32 36 L35 35 M28 46 L25 45 M32 58 L35 57 M28 68 L25 67 M12 36 L9 35 M47 30 L50 29"/><path d="M14 80 L46 80 L42 104 L18 104 Z"/><path d="M13 86 L47 86"/></svg>
+  <h1 id="title">Jotter Race</h1>
   <svg class="underline" viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 9 C 60 4, 120 12, 180 7 S 260 5, 298 8"/></svg>
   <div class="lengths" id="lengths" role="radiogroup" aria-label="Letters in the word">
     <span class="lbl">Letters:</span>
   </div>
 
   <div class="head">
+    <svg class="doodle in-margin biro-blue" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(0 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
     <h2>My word</h2>
   </div>
   <div class="myword" id="myword"></div>
@@ -238,19 +251,20 @@
   </div>
 
   <div class="head">
+    <svg class="doodle in-margin biro-red" viewBox="0 0 40 60" aria-hidden="true"><path d="M10 16 C 10 6, 30 4, 31 15 C 32 24, 20 25, 20 34 L20 39" style="stroke-width:2.4"/><circle class="dot" cx="20" cy="49" r="2.6"/></svg>
     <h2>My guesses</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-mine" aria-label="How my guesses work">i</button>
   </div>
   <div class="note" id="note-mine" hidden>
     <p>Type each word you ask them, then the number they tell you.</p>
     <p>Tap a letter in a guess to cross it off. Tap again to circle it, and again to clear it. The alphabet updates too, and the mark shows in every guess with that letter.</p>
-    <p>Typo? Backspace while typing, or tap the line number to clear that line.</p>
+    <p>Typo? Backspace while typing, or tap the line number to clear that line. A new line appears by itself when you start the last one.</p>
   </div>
   <div class="colhead"><span></span><span>word</span><span>how many</span></div>
   <ol class="lines" id="mine"></ol>
-  <button class="pen-btn add" type="button" data-add="mine">Add a line</button>
 
   <div class="head">
+    <svg class="doodle in-margin biro-green" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(20 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
     <h2>The words they've asked me</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-theirs" aria-label="How this section works">i</button>
   </div>
@@ -260,9 +274,10 @@
   </div>
   <div class="colhead"><span></span><span>word</span><span>I say</span></div>
   <ol class="lines" id="theirs"></ol>
-  <button class="pen-btn add" type="button" data-add="theirs">Add a line</button>
 
   <footer>
+    <svg class="doodle corner-flower biro-blue" viewBox="0 0 40 60" aria-hidden="true"><path d="M20 18 L20 6 M20 18 L31 12 M20 18 L32 23 M20 18 L26 30 M20 18 L13 30 M20 18 L8 23 M20 18 L9 12 M20 18 L13 6 M20 18 L27 6"/><circle cx="20" cy="18" r="3.5"/><path d="M20 22 C 21 34, 18 46, 21 58"/><path d="M20 40 C 14 35, 10 37, 12 41 C 14 44, 18 43, 20 40"/></svg>
+    <svg class="doodle corner-flower second biro-black" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(-15 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
     <button class="pen-btn" id="reset" type="button">Start a new game</button>
   </footer>
 </main>
@@ -325,9 +340,6 @@
     lengths.querySelectorAll('.len').forEach(function (b) {
       b.setAttribute('aria-checked', String(+b.dataset.len === LEN));
     });
-    var t = 'The ' + NAMES[LEN] + '-Letter Word Game';
-    document.getElementById('title').textContent = t;
-    document.title = t;
     var cellW = LEN >= 7 ? 26 : 32;
     document.documentElement.style.setProperty('--cell-font', LEN >= 7 ? '1.55rem' : '1.9rem');
     document.querySelectorAll('.cell').forEach(function (c) { c.style.maxWidth = cellW + 'px'; c.style.width = cellW + 'px'; });
@@ -505,8 +517,22 @@
   function renderList(name) {
     var ol = document.getElementById(name);
     ol.innerHTML = '';
-    var isMine = name === 'mine';
-    state[name].forEach(function (row, idx) {
+    state[name].forEach(function (row, idx) { ol.appendChild(buildRow(name, row, idx)); });
+  }
+
+  // Once the last line gets used, a fresh empty line appears underneath.
+  function ensureSpare(name) {
+    var rows = state[name];
+    if (rows[rows.length - 1].w) {
+      var row = { w: '', n: '' };
+      rows.push(row);
+      document.getElementById(name).appendChild(buildRow(name, row, rows.length - 1));
+      paintLength();
+    }
+  }
+
+  function buildRow(name, row, idx) {
+      var isMine = name === 'mine';
       var li = document.createElement('li');
       var num = document.createElement('button');
       num.type = 'button'; num.className = 'n'; num.textContent = idx + 1;
@@ -519,6 +545,7 @@
       function sync() {
         row.w = inputs.map(function (x) { return x.value; }).join('');
         if (!isMine) { row.n = common(row.w, state.myword.join('')); sc.textContent = row.n; paintTheirs(li, row); }
+        ensureSpare(name);
         save();
       }
       function lock(inp) { if (isMine) inp.readOnly = !!inp.value; }
@@ -595,20 +622,11 @@
       });
 
       li.appendChild(cells); li.appendChild(sc);
-      ol.appendChild(li);
       if (isMine) cells.querySelectorAll('.cell').forEach(paintCell);
       else paintTheirs(li, row);
-    });
+      return li;
   }
 
-  document.querySelectorAll('[data-add]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var name = b.dataset.add;
-      state[name].push({ w: '', n: '' }); save(); renderList(name); paintLength();
-      var rows = document.getElementById(name).querySelectorAll('li');
-      rows[rows.length - 1].querySelector('.cell input').focus();
-    });
-  });
 
   document.getElementById('reset').addEventListener('click', function () {
     state = root.games[LEN] = blank(LEN); save(); renderAll();
