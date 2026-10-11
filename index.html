@@ -321,6 +321,17 @@
       if (old && old.mine) root.games[5] = old;
     }
   } catch (e) {}
+  // Older saved games started with 8 empty lines. Trim spare empty lines
+  // at the bottom of every length, keeping at least 3 and one empty spare.
+  function trimRows(rows) {
+    function empty(r) { return !r.w && !r.n; }
+    while (rows.length > START_ROWS && empty(rows[rows.length - 1]) && empty(rows[rows.length - 2])) rows.pop();
+  }
+  Object.keys(root.games).forEach(function (k) {
+    var g = root.games[k];
+    if (g && g.mine) trimRows(g.mine);
+    if (g && g.theirs) trimRows(g.theirs);
+  });
   var LEN = root.len;
   var state = root.games[LEN] || (root.games[LEN] = blank(LEN));
   function save() { try { localStorage.setItem(KEY, JSON.stringify(root)); } catch (e) {} }
