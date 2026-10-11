@@ -195,6 +195,11 @@
   }
   input.score:focus { outline: none; border-color: var(--red); }
   .score.auto { border-style: dashed; }
+  .del { width: 22px; height: 26px; flex: none; margin-left: -4px; padding: 0; background: none; border: 0; cursor: pointer; display: grid; place-items: center; opacity: .55; }
+  .del:active { transform: translateY(1px); opacity: 1; }
+  .del svg { width: 16px; height: 20px; }
+  .del svg path { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .del.empty { visibility: hidden; }
   .colhead { display: flex; gap: 12px; color: var(--pencil); font-size: 1rem; }
   .colhead span:first-child { width: 24px; }
   .colhead span:nth-child(2) { width: var(--word-w, 168px); }
@@ -269,7 +274,7 @@
   <div class="note" id="note-mine" hidden>
     <p>Type each word you ask them, then the number they tell you.</p>
     <p>Tap a letter in a guess to cross it off. Tap again to circle it, and again to clear it. The alphabet updates too, and the mark shows in every guess with that letter.</p>
-    <p>Typo? Backspace while typing, or tap the line number to clear that line. A new line appears by itself when you start the last one.</p>
+    <p>Typo? Backspace while typing, or tap the line number to clear that line. Tap the little bin at the end of a line to delete it. A new line appears by itself when you start the last one.</p>
   </div>
   <div class="colhead"><span></span><span>word</span><span>how many</span></div>
   <ol class="lines" id="mine"></ol>
@@ -281,7 +286,7 @@
   </div>
   <div class="note" id="note-theirs" hidden>
     <p>Type the word they ask you. The number of its letters that are in my word fills itself in, and those letters turn red.</p>
-    <p>Tap the line number to clear a line.</p>
+    <p>Tap the line number to clear a line, or the little bin at the end to delete it.</p>
   </div>
   <div class="colhead"><span></span><span>word</span><span>I say</span></div>
   <ol class="lines" id="theirs"></ol>
@@ -299,7 +304,7 @@
   var OLD_KEY = 'five-letter-word-game-v1';
   var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   var NAMES = { 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 7: 'Seven', 8: 'Eight' };
-  var START_ROWS = 8;
+  var START_ROWS = 3;
 
   function blank(len) {
     return { marks: {}, order: [], myword: Array(len).fill(''),
@@ -661,7 +666,21 @@
         inputs[0].focus();
       });
 
-      li.appendChild(cells); li.appendChild(sc);
+      var del = document.createElement('button');
+      del.type = 'button'; del.className = 'del';
+      del.setAttribute('aria-label', 'Delete line ' + (idx + 1));
+      del.innerHTML = '<svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 5 H14 M6 5 V3 H10 V5 M3.5 5 L4.5 18 H11.5 L12.5 5 M6.5 8 V15 M9.5 8 V15"/></svg>';
+      del.addEventListener('click', function () {
+        var rows = state[name];
+        rows.splice(rows.indexOf(row), 1);
+        if (!rows.length || rows[rows.length - 1].w) rows.push({ w: '', n: '' });
+        while (rows.length < START_ROWS) rows.push({ w: '', n: '' });
+        save(); renderList(name); paintLength();
+      });
+      function paintDel() { del.classList.toggle('empty', !row.w && !(isMine && row.n)); }
+      li.appendChild(cells); li.appendChild(sc); li.appendChild(del);
+      paintDel();
+      li.addEventListener('input', paintDel);
       if (isMine) cells.querySelectorAll('.cell').forEach(paintCell);
       else paintTheirs(li, row);
       return li;
