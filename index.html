@@ -156,6 +156,8 @@
     font-size: 2.4rem; line-height: 1; background: none; border: 0; color: var(--ink);
     cursor: pointer; padding: 0 4px; transition: transform .35s ease;
   }
+  .found { touch-action: none; }
+  .found.slot { opacity: .25; }
   .found:nth-child(odd) { transform: rotate(-4deg); }
   .found:nth-child(even) { transform: rotate(3deg) translateY(3px); }
   .side { display: flex; flex-direction: column; gap: 12px; align-items: center; }
@@ -228,6 +230,13 @@
   .del svg { width: 16px; height: 20px; }
   .del svg path { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .del.empty { visibility: hidden; }
+  .go { display: none; width: 30px; height: 30px; flex: none; padding: 0; background: none; border: 0; cursor: pointer; place-items: center; opacity: .3; }
+  .go svg { width: 26px; height: 26px; }
+  .go svg path { fill: none; stroke: #2E8B57; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .go.ready { opacity: 1; }
+  .go.ready:active { transform: translateY(1px); }
+  .is-online .lines li.draft:not(.wait) .del { display: grid !important; }
+  .is-online .lines li.draft:not(.wait) .go { display: grid; }
   /* Not a real word */
   .lines li.bad .cell input, .myword.bad .slot { color: var(--red); border-bottom: 2px dashed var(--red); }
   .lines li.bad .score { border-color: var(--red); color: var(--red); }
@@ -259,6 +268,15 @@
     transform: translate(-50%, -60%) rotate(-6deg);
   }
   @media (prefers-reduced-motion: reduce) { .found { transition: none; } }
+  /* Win celebration */
+  .party { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(0,0,0,.28); animation: partyIn .25s ease; cursor: pointer; }
+  .party canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .party .big { position: relative; font-family: 'Patrick Hand', cursive; font-size: 5rem; color: var(--red); transform: rotate(-6deg);
+    background: var(--paper); border: 2.5px solid var(--ink); border-radius: 18px 26px 16px 24px; padding: 18px 26px 16px; max-width: 86vw; box-shadow: 0 8px 30px rgba(0,0,0,.25); animation: pop .6s cubic-bezier(.2,1.6,.4,1) both; text-align: center; line-height: 1; }
+  .party .big small { display: block; font-size: 1.6rem; color: var(--ink); margin-top: 10px; }
+  .party.fade { opacity: 0; transition: opacity .6s; }
+  @keyframes pop { from { transform: scale(.2) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(-6deg); opacity: 1; } }
+  @keyframes partyIn { from { opacity: 0; } }
 </style>
 </head>
 <body>
@@ -314,7 +332,7 @@
     <p>Hide takes the crossed-off and circled letters out of the alphabet, leaving only the ones you haven't worked out yet. Show all brings them back.</p>
     <p>Scramble shuffles the letters in the circle so you can spot the word.</p>
     <p>Each word length keeps its own game, so switching length won't lose your page.</p>
-    <p>Play online: pick a length, tap Play online, and share the code. The other person taps Join a game and types it in. Whoever picks their secret word first goes first. Your score against each person is kept on this phone. Your guesses send themselves once they're a real word, the numbers fill in on their own, and you can change your secret word until the first guess.</p>
+    <p>Play online: pick a length, tap Play online, and share the code. The other person taps Join a game and types it in. Whoever picks their secret word first goes first. Your score against each person is kept on this phone. Tap the green tick to send a guess (the bin clears it), the numbers fill in on their own, and you can change your secret word until the first guess.</p>
   </div>
   <div class="alphabet" id="alphabet" role="group" aria-label="Alphabet"></div>
 
@@ -491,13 +509,22 @@
     save(); renderMarks();
   }
 
+  // A guess that scored 0: none of its letters are in their word, so cross them off.
+  // Letters you've already marked are left alone.
+  function zeroOut(w) {
+    w.split('').forEach(function (l) { if (!state.marks[l]) state.marks[l] = 'out'; });
+    save(); renderMarks();
+  }
+
   var orbitOrder = LETTERS.slice();
   var focusBtn = document.getElementById('focus');
   var zone = circle.parentNode;
   function focusOn() { return !!root.focus; }
   focusBtn.addEventListener('click', function () {
-    root.focus = !root.focus; save(); renderMarks();
+    root.focus = !root.focus; alphaMix = null; save(); renderMarks();
   });
+  // While hidden, Scramble also mixes up the letters still showing. Show all puts them back in order.
+  var alphaMix = null;
 
   function renderOrbit() {
     circle.querySelectorAll('.orbit').forEach(function (n) { n.remove(); });
@@ -544,6 +571,7 @@
       b.classList.toggle('out', m === 'out');
       b.classList.toggle('in', m === 'in');
       b.setAttribute('aria-label', b.dataset.letter + (m === 'out' ? ', crossed off' : m === 'in' ? ', in their word' : ''));
+      b.style.order = focusOn() && alphaMix ? alphaMix.indexOf(b.dataset.letter) : '';
     });
     circle.querySelectorAll('.found, .empty').forEach(function (n) { n.remove(); });
     if (!state.order.length) {
@@ -555,7 +583,11 @@
       var f = document.createElement('button');
       f.type = 'button'; f.className = 'found'; f.textContent = l;
       f.setAttribute('aria-label', 'Take ' + l + ' out of the circle');
-      f.addEventListener('click', function () { setMark(l, ''); });
+      f.addEventListener('click', function () {
+        if (f.dataset.skipClick) { delete f.dataset.skipClick; return; }
+        setMark(l, '');
+      });
+      attachReorder(f);
       circle.appendChild(f);
     });
     document.querySelectorAll('#mine .cell').forEach(paintCell);
@@ -563,6 +595,54 @@
     focusBtn.setAttribute('aria-pressed', String(focusOn()));
     focusBtn.textContent = focusOn() ? 'Show all' : 'Hide';
     renderOrbit();
+  }
+
+  // Circle letters: tap takes one out; drag slides it to a new spot in the circle.
+  // Moves are tracked on the whole page, because moving the letter in the page drops its pointer capture.
+  function attachReorder(f) {
+    var start = null, ghost = null, dragged = false;
+    function move(ev) {
+      if (!start) return;
+      if (!dragged && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 8) {
+        dragged = true;
+        ghost = document.createElement('div'); ghost.className = 'ghost'; ghost.textContent = f.textContent;
+        document.body.appendChild(ghost);
+        f.classList.add('slot');
+      }
+      if (!dragged) return;
+      ev.preventDefault();
+      ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
+      // Count the other letters that sit before the finger, in reading order.
+      var others = [].filter.call(circle.querySelectorAll('.found'), function (o) { return o !== f; });
+      var idx = 0;
+      others.forEach(function (o) {
+        var r = o.getBoundingClientRect();
+        if (r.bottom < ev.clientY) idx++;
+        else if (r.top <= ev.clientY && r.left + r.width / 2 < ev.clientX) idx++;
+      });
+      var ref = idx < others.length ? others[idx] : (others.length ? others[others.length - 1].nextSibling : null);
+      if (ref !== f && f.nextSibling !== ref) circle.insertBefore(f, ref);
+    }
+    function end() {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', end);
+      document.removeEventListener('pointercancel', end);
+      if (dragged) {
+        if (ghost) ghost.remove();
+        f.classList.remove('slot');
+        f.dataset.skipClick = '1';
+        setTimeout(function () { delete f.dataset.skipClick; }, 400);
+        state.order = [].map.call(circle.querySelectorAll('.found'), function (o) { return o.textContent; });
+        save(); renderMarks();
+      }
+      start = null; ghost = null; dragged = false;
+    }
+    f.addEventListener('pointerdown', function (ev) {
+      start = { x: ev.clientX, y: ev.clientY }; dragged = false;
+      document.addEventListener('pointermove', move, { passive: false });
+      document.addEventListener('pointerup', end);
+      document.addEventListener('pointercancel', end);
+    });
   }
 
   // Alphabet: tap cycles plain -> crossed off -> circled -> plain; drag drops onto circle or bin.
@@ -611,6 +691,13 @@
       for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
     }
     state.order = a;
+    if (focusOn()) {
+      var mix = LETTERS.slice(), was = (alphaMix || LETTERS).join('');
+      for (var tt = 0; tt < 6 && (tt === 0 || mix.join('') === was); tt++) {
+        for (var q = mix.length - 1; q > 0; q--) { var r = Math.floor(Math.random() * (q + 1)); var z = mix[q]; mix[q] = mix[r]; mix[r] = z; }
+      }
+      alphaMix = mix;
+    }
     for (var k = orbitOrder.length - 1; k > 0; k--) { var m = Math.floor(Math.random() * (k + 1)); var y = orbitOrder[k]; orbitOrder[k] = orbitOrder[m]; orbitOrder[m] = y; }
     save(); renderMarks();
   });
@@ -696,7 +783,8 @@
       // Written letters lock (so a tap marks them), except the one you're typing in,
       // and every letter of a line that isn't a real word yet.
       function lock(inp) {
-        if (!isMine || row.locked || row.wait) return;
+        if (!isMine) return;
+        if (row.locked || row.wait) { inp.readOnly = true; return; }
         var w = inputs.map(function (x) { return x.value; }).join('');
         inp.readOnly = !!inp.value && inp !== document.activeElement && !notWord(w);
       }
@@ -752,6 +840,7 @@
           var v = sc.value.replace(/[^0-9]/g, '').slice(-1);
           sc.value = v && +v <= LEN ? v : '';
           row.n = sc.value; save();
+          if (sc.value === '0' && isWord(row.w)) zeroOut(row.w);
         });
         sc.addEventListener('keydown', function (e) {
           if (e.key === 'Backspace' && !sc.value) {
@@ -781,6 +870,11 @@
       del.setAttribute('aria-label', 'Delete line ' + (idx + 1));
       del.innerHTML = '<svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 5 H14 M6 5 V3 H10 V5 M3.5 5 L4.5 18 H11.5 L12.5 5 M6.5 8 V15 M9.5 8 V15"/></svg>';
       del.addEventListener('click', function () {
+        if (online && row.draft) {
+          inputs.forEach(function (x) { x.value = ''; lock(x); paintCell(x.parentNode); });
+          sync(); paintDel(); inputs[0].focus();
+          return;
+        }
         var rows = state[name];
         rows.splice(rows.indexOf(row), 1);
         if (!rows.length || rows[rows.length - 1].w) rows.push({ w: '', n: '' });
@@ -790,6 +884,7 @@
       function paintBad() {
         var bad = notWord(row.w);
         li.classList.toggle('bad', bad);
+        if (tick) tick.classList.toggle('ready', isWord(row.w));
         if (isMine) {
           inputs.forEach(lock);
           sc.readOnly = bad || !!online; sc.placeholder = bad ? '\u2717' : '';
@@ -797,7 +892,13 @@
         } else if (bad) sc.textContent = '\u2717';
       }
       function paintDel() { del.classList.toggle('empty', !row.w && !(isMine && row.n)); }
-      li.appendChild(cells); li.appendChild(sc); li.appendChild(del);
+      var tick = document.createElement('button');
+      tick.type = 'button'; tick.className = 'go';
+      tick.setAttribute('aria-label', 'Send this guess');
+      tick.innerHTML = '<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M4 14 L10 20 L22 6"/></svg>';
+      tick.addEventListener('click', function () { if (isWord(row.w)) sendDraft(row); });
+      li.classList.toggle('draft', !!row.draft);
+      li.appendChild(cells); li.appendChild(sc); li.appendChild(del); li.appendChild(tick);
       paintDel(); paintBad();
       li.addEventListener('input', paintDel);
       if (isMine) cells.querySelectorAll('.cell').forEach(paintCell);
@@ -992,6 +1093,13 @@
 
     state.mine = v.guesses.filter(function (x) { return x.by === me; })
       .map(function (x) { return { w: x.w, n: String(x.n), locked: true }; });
+    state.zeroed = state.zeroed || {};
+    v.guesses.forEach(function (x) {
+      if (x.by === me && +x.n === 0 && !state.zeroed[x.w]) {
+        state.zeroed[x.w] = 1;
+        x.w.split('').forEach(function (l) { if (!state.marks[l]) state.marks[l] = 'out'; });
+      }
+    });
     if (v.ready && !v.winner) state.mine.push({ w: v.myTurn ? (state.draft || '') : '', n: '', draft: true, wait: !v.myTurn });
     state.theirs = v.guesses.filter(function (x) { return x.by !== me; })
       .map(function (x) { return { w: x.w, n: '', locked: true }; });
@@ -1005,6 +1113,11 @@
       lockOnline(v);
     }
     paintStatus(v);
+    if (v.winner && v.them && !state.celebrated) {
+      state.celebrated = 1; save();
+      if (v.winner === me) celebrate('Winner!', 'You got ' + v.oppName + "'s word: " + v.them.word, true);
+      else celebrate(v.oppName + ' wins', 'Their word was ' + v.them.word, false);
+    }
     if (v.winner && v.them) {
       root.results = root.results || {};
       if (!root.results[online.code]) {
@@ -1013,6 +1126,50 @@
       }
     }
     renderTally(v.them ? v.oppName : '');
+  }
+
+  // Fireworks and a big WINNER for whoever gets the word. Tap anywhere to close.
+  function celebrate(title, sub, fireworks) {
+    var box = document.createElement('div'); box.className = 'party';
+    var big = document.createElement('div'); big.className = 'big'; big.textContent = title;
+    var sm = document.createElement('small'); sm.textContent = sub; big.appendChild(sm);
+    var cv = document.createElement('canvas');
+    box.appendChild(cv); box.appendChild(big); document.body.appendChild(box);
+    var done = false;
+    function close() { if (done) return; done = true; box.classList.add('fade'); setTimeout(function () { box.remove(); }, 650); }
+    box.addEventListener('click', close);
+    setTimeout(close, fireworks ? 6000 : 3500);
+    if (!fireworks || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1, W, H;
+    function size() { W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    size();
+    var colours = ['#D9534F', '#2340A0', '#2E8B57', '#E8A317', '#8E44AD', '#E86A92'];
+    var bits = [], t0 = performance.now(), nextBurst = 0;
+    function burst() {
+      var x = W * (.15 + Math.random() * .7), y = H * (.12 + Math.random() * .4);
+      var c = colours[Math.floor(Math.random() * colours.length)], n = 46;
+      for (var i = 0; i < n; i++) {
+        var a = (i / n) * Math.PI * 2, sp = 2 + Math.random() * 3.5;
+        bits.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, c: Math.random() < .2 ? '#FFFFFF' : c });
+      }
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+    function frame(now) {
+      if (done && !bits.length) return;
+      var el2 = now - t0;
+      if (el2 < 3800 && el2 > nextBurst) { burst(); nextBurst = el2 + 280 + Math.random() * 320; }
+      ctx.clearRect(0, 0, W, H);
+      bits = bits.filter(function (b) { return b.life > 0; });
+      bits.forEach(function (b) {
+        b.x += b.vx; b.y += b.vy; b.vy += .06; b.vx *= .985; b.vy *= .985; b.life -= .012;
+        ctx.globalAlpha = Math.max(b.life, 0);
+        ctx.fillStyle = b.c;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 2.6, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      if (el2 < 7000) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   }
 
   // Running score against each person, kept on this phone.
@@ -1056,7 +1213,7 @@
     else if (!v.them.word) msg = 'Waiting for ' + v.oppName + ' to pick a word.';
     else if (v.winner === online.seat) { msg = 'You got it! ' + v.oppName + "'s word was " + v.them.word + '.'; cls += ' won'; }
     else if (v.winner) { msg = v.oppName + ' got your word! Theirs was ' + v.them.word + '.'; cls += ' won'; }
-    else if (v.myTurn) { msg = 'Your turn. Type a guess in My guesses.'; cls += ' mine'; }
+    else if (v.myTurn) { msg = 'Your turn. Type a guess, then tap the tick.'; cls += ' mine'; }
     else msg = v.oppName + "'s turn.";
     onStatus.textContent = msg; onStatus.className = cls;
     el('tag-mine').hidden = !(v.ready && !v.winner && v.myTurn);
@@ -1082,14 +1239,10 @@
     }).catch(function () { onStatus.textContent = "Couldn't save your word. Check your signal."; });
   }
 
-  var sending = false, sendTimer = null;
-  // Wait a moment after the last letter, so fixing a word letter by letter
-  // doesn't send a real word you passed through on the way.
+  var sending = false;
+  // The guess you're typing is kept as a draft until you tap the green tick.
   function onlineDraft(row) {
     state.draft = row.w; save();
-    clearTimeout(sendTimer);
-    if (!isWord(row.w)) return;
-    sendTimer = setTimeout(function () { if (row.w === state.draft) sendDraft(row); }, 1200);
   }
   function sendDraft(row) {
     if (!isWord(row.w) || sending) return;
