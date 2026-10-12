@@ -693,7 +693,14 @@
         save();
         if (online && isMine && row.draft) onlineDraft(row);
       }
-      function lock(inp) { if (isMine) inp.readOnly = !!inp.value; }
+      // Written letters lock (so a tap marks them), except the one you're typing in,
+      // and every letter of a line that isn't a real word yet.
+      function lock(inp) {
+        if (!isMine || row.locked || row.wait) return;
+        var w = inputs.map(function (x) { return x.value; }).join('');
+        inp.readOnly = !!inp.value && inp !== document.activeElement && !notWord(w);
+      }
+      function go(j) { inputs[j].readOnly = false; inputs[j].focus(); }
 
       for (var i = 0; i < LEN; i++) {
         (function (i) {
@@ -708,7 +715,7 @@
             lock(inp);
             if (isMine) paintCell(cell);
             sync();
-            if (inp.value) { if (i < LEN - 1) inputs[i + 1].focus(); else if (isMine) sc.focus(); else inp.blur(); }
+            if (inp.value) { if (i < LEN - 1) go(i + 1); else if (isMine && !sc.readOnly) sc.focus(); else if (!isMine) inp.blur(); }
           });
           inp.addEventListener('keydown', function (e) {
             if (row.locked) { e.preventDefault(); return; }
@@ -721,6 +728,7 @@
               prev.focus();
             }
           });
+          inp.addEventListener('blur', function () { lock(inp); });
           if (isMine) {
             // A tap on a written letter marks it, just like the alphabet.
             inp.addEventListener('click', function () {
@@ -783,7 +791,8 @@
         var bad = notWord(row.w);
         li.classList.toggle('bad', bad);
         if (isMine) {
-          sc.readOnly = bad; sc.placeholder = bad ? '\u2717' : '';
+          inputs.forEach(lock);
+          sc.readOnly = bad || !!online; sc.placeholder = bad ? '\u2717' : '';
           if (bad && sc.value) { sc.value = ''; row.n = ''; save(); }
         } else if (bad) sc.textContent = '\u2717';
       }
@@ -1043,7 +1052,7 @@
   function paintStatus(v) {
     var msg, cls = 'status';
     if (!v.them) msg = 'Waiting for someone to join. Share the code.';
-    else if (!v.me.word) msg = 'Pick your secret word up in My word.';
+    else if (!v.me.word) msg = 'Enter your word.';
     else if (!v.them.word) msg = 'Waiting for ' + v.oppName + ' to pick a word.';
     else if (v.winner === online.seat) { msg = 'You got it! ' + v.oppName + "'s word was " + v.them.word + '.'; cls += ' won'; }
     else if (v.winner) { msg = v.oppName + ' got your word! Theirs was ' + v.them.word + '.'; cls += ' won'; }
@@ -1073,9 +1082,16 @@
     }).catch(function () { onStatus.textContent = "Couldn't save your word. Check your signal."; });
   }
 
-  var sending = false;
+  var sending = false, sendTimer = null;
+  // Wait a moment after the last letter, so fixing a word letter by letter
+  // doesn't send a real word you passed through on the way.
   function onlineDraft(row) {
     state.draft = row.w; save();
+    clearTimeout(sendTimer);
+    if (!isWord(row.w)) return;
+    sendTimer = setTimeout(function () { if (row.w === state.draft) sendDraft(row); }, 1200);
+  }
+  function sendDraft(row) {
     if (!isWord(row.w) || sending) return;
     var v = gameView(online.data);
     if (!v.myTurn) return;
