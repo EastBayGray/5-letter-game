@@ -193,6 +193,8 @@
   /* My word */
   .myword { display: flex; gap: 8px; margin-top: 6px; }
   .myword[hidden] { display: none; }
+  .setting-up #online ~ *:not(footer) { display: none !important; }
+  .form-title { margin: 0 0 6px; font-size: 1.4rem; }
   .their-know { display: none; width: 76%; max-width: 360px; margin: calc(var(--line) * 0.5) 0 0 6%; }
   .mode-cpu .their-know { display: block; }
   .their-know .found { cursor: default; color: var(--red); font-size: 2rem; padding: 0 2px; }
@@ -331,6 +333,7 @@
       <button class="pen-btn small" id="on-home" type="button">Home</button>
     </div>
     <div id="on-form" hidden>
+      <p class="form-title" id="on-form-title"></p>
       <div class="row">
         <input id="on-name" placeholder="Your name" autocomplete="off" maxlength="16" aria-label="Your name">
         <input id="on-name2" placeholder="Their name" autocomplete="off" maxlength="16" aria-label="Second player's name">
@@ -1090,6 +1093,8 @@
 
   function showPanel(which) {
     onOff.hidden = which !== 'off'; onForm.hidden = which !== 'form'; onLive.hidden = which !== 'live';
+    // While you're setting up a game, don't show the old worksheet underneath.
+    document.body.classList.toggle('setting-up', which === 'form');
   }
   function showErr(msg) { onErr.textContent = msg; onErr.hidden = !msg; }
   function openForm(mode, code) {
@@ -1099,6 +1104,7 @@
     onName.placeholder = mode === 'pass' ? 'First player' : 'Your name';
     onName2.placeholder = 'Second player';
     el('on-go').textContent = mode === 'join' ? 'Join' : 'Start';
+    el('on-form-title').textContent = mode === 'cpu' ? 'Play the computer' : mode === 'join' ? 'Join a game' : 'Start an online game';
     if (code) onCode.value = code;
     showPanel('form');
     (onName.value ? (mode === 'join' && !onCode.value ? onCode : null) : onName)?.focus();
