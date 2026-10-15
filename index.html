@@ -195,6 +195,7 @@
   .myword[hidden] { display: none; }
   .setting-up #online ~ *:not(footer) { display: none !important; }
   .setting-up #reset { display: none !important; }
+  .pre-game .guess-part, .no-word .after-word { display: none !important; }
   .form-title { margin: 0 0 6px; font-size: 1.4rem; }
   .their-know { display: none; width: 76%; max-width: 360px; margin: calc(var(--line) * 0.5) 0 0 6%; }
   .mode-cpu .their-know { display: block; }
@@ -368,12 +369,12 @@
   <div class="myword" id="myword-mask" aria-label="My word, hidden" hidden></div>
   <p class="myword-note" id="myword-note" hidden>No double letters in your word. Pick one where every letter is different.</p>
 
-  <div class="head">
+  <div class="head after-word">
     <h2>Alphabet</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
     <button class="pen-btn small" id="focus" type="button" aria-pressed="false">Hide</button>
   </div>
-  <div class="note" id="note-alpha" hidden>
+  <div class="note after-word" id="note-alpha" hidden>
     <p>Tap a letter once to cross it off, twice to put it in the circle, and a third time to clear it.</p>
     <p>You can also drag a letter straight onto the circle. Tap a letter in the circle to take it out.</p>
     <p>Hide takes the crossed-off and circled letters out of the alphabet, leaving only the ones you haven't worked out yet. Show all brings them back.</p>
@@ -384,9 +385,9 @@
     <p>Play the computer: you pick a word, it picks one, and you take turns.</p>
     <p>Your score against each person is kept on this phone.</p>
   </div>
-  <div class="alphabet" id="alphabet" role="group" aria-label="Alphabet"></div>
+  <div class="alphabet after-word" id="alphabet" role="group" aria-label="Alphabet"></div>
 
-  <div class="zone">
+  <div class="zone after-word">
     <div class="circle" id="circle" data-drop="in">
       <svg class="loop" viewBox="0 0 210 100" preserveAspectRatio="none" aria-hidden="true">
         <path d="M108 6 C 160 4, 205 22, 203 50 C 201 82, 150 96, 100 95 C 46 94, 6 78, 7 49 C 8 20, 52 6, 112 9"/>
@@ -397,29 +398,29 @@
     </div>
   </div>
 
-  <div class="head">
+  <div class="head guess-part">
     <svg class="doodle in-margin biro-red" viewBox="0 0 40 60" aria-hidden="true"><path d="M10 16 C 10 6, 30 4, 31 15 C 32 24, 20 25, 20 34 L20 39" style="stroke-width:2.4"/><circle class="dot" cx="20" cy="49" r="2.6"/></svg>
     <h2>My guesses</h2><span class="turn-tag" id="tag-mine" hidden>your go</span>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-mine" aria-label="How my guesses work">i</button>
   </div>
-  <div class="note" id="note-mine" hidden>
+  <div class="note guess-part" id="note-mine" hidden>
     <p>Type each word you ask them, then the number they tell you.</p>
     <p>Tap a letter in a guess to cross it off. Tap again to circle it, and again to clear it. The alphabet updates too, and the mark shows in every guess with that letter.</p>
     <p>Typo? Backspace while typing, or tap the line number to clear that line. If it isn't a real word, the letters go red with a dashed line and you can't give it a number. Tap the little bin at the end of a line to delete it. A new line appears by itself when you start the last one.</p>
   </div>
-  <ol class="lines" id="mine"></ol>
+  <ol class="lines guess-part" id="mine"></ol>
 
-  <div class="head">
+  <div class="head guess-part">
     <svg class="doodle in-margin biro-green" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(20 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
     <h2>The words they've asked me</h2><span class="turn-tag" id="tag-theirs" hidden>their go</span>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-theirs" aria-label="How this section works">i</button>
   </div>
-  <div class="note" id="note-theirs" hidden>
+  <div class="note guess-part" id="note-theirs" hidden>
     <p>Type the word they ask you. The number of its letters that are in my word fills itself in, and those letters turn red. Each different letter counts once, so a doubled letter only counts one. If it isn't a real word you'll see a red ✗ instead of a number.</p>
     <p>Tap the line number to clear a line, or the little bin at the end to delete it.</p>
   </div>
-  <ol class="lines" id="theirs"></ol>
-  <div class="their-know">
+  <ol class="lines guess-part" id="theirs"></ol>
+  <div class="their-know guess-part">
     <div class="circle" id="their-circle" aria-live="polite">
       <svg class="loop" viewBox="0 0 210 100" preserveAspectRatio="none" aria-hidden="true">
         <path d="M108 6 C 160 4, 205 22, 203 50 C 201 82, 150 96, 100 95 C 46 94, 6 78, 7 49 C 8 20, 52 6, 112 9"/>
@@ -1202,7 +1203,7 @@
     if (online && online.unsub) online.unsub();
     clearTimeout(cpuTimer); cpuTimer = null;
     el('cover').hidden = true;
-    document.body.classList.remove('mode-cpu', 'mode-pass');
+    document.body.classList.remove('mode-cpu', 'mode-pass', 'pre-game', 'no-word');
     online = null; root.online = null;
     document.body.classList.remove('is-online');
     el('tag-mine').hidden = el('tag-theirs').hidden = true;
@@ -1238,6 +1239,11 @@
     online.data = g;
     online.mode = g.mode || 'online';
     document.body.classList.toggle('mode-cpu', online.mode === 'cpu');
+    // Guess lists only appear once both words are in.
+    var pre = gameView(g, online.seat);
+    document.body.classList.toggle('pre-game', !pre.ready && !pre.winner);
+    // Alphabet, circle and Scramble wait until your own word is in.
+    document.body.classList.toggle('no-word', !(pre.me && pre.me.word) && !pre.winner);
     document.body.classList.toggle('mode-pass', online.mode === 'pass');
     if (LEN !== g.len) { LEN = g.len; }
     updateInfo(online.code, g, online.seat);
@@ -1433,10 +1439,10 @@
     else if (!v.them.word) msg = 'Waiting for ' + v.oppName + ' to pick a word.';
     else if (v.winner === online.seat) { msg = 'You got it! ' + v.oppName + "'s word was " + v.them.word + '.'; cls += ' won'; }
     else if (v.winner) { msg = v.oppName + ' got your word! Theirs was ' + v.them.word + '.'; cls += ' won'; }
-    else if (v.myTurn) { msg = 'Your turn. Type a guess, then tap the tick.'; cls += ' mine'; }
+    else if (v.myTurn) msg = ''; // the "your go" tag by My guesses says it
     else msg = online.mode === 'cpu' ? 'The computer is thinking…' : v.oppName + "'s turn.";
     if (v.winner && g.rematch && g.rematchBy !== online.seat) msg += ' ' + v.oppName + ' wants a rematch!';
-    onStatus.textContent = msg; onStatus.className = cls;
+    onStatus.textContent = msg; onStatus.className = cls; onStatus.hidden = !msg;
     el('tag-mine').hidden = !(v.ready && !v.winner && v.myTurn);
     el('tag-theirs').hidden = !(v.ready && !v.winner && !v.myTurn);
   }
