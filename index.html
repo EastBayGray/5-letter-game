@@ -191,6 +191,7 @@
   /* My word */
   .myword { display: flex; gap: 8px; margin-top: 6px; }
   .myword[hidden] { display: none; }
+  .myword-note { color: var(--red); margin: 4px 0 0; font-size: 1.1rem; line-height: 1.3; }
   #myword-mask .slot { display: inline-flex; align-items: flex-end; justify-content: center; }
   .slot {
     flex: 1; min-width: 0; max-width: 44px; height: var(--line);
@@ -355,6 +356,7 @@
   </div>
   <div class="myword" id="myword"></div>
   <div class="myword" id="myword-mask" aria-label="My word, hidden" hidden></div>
+  <p class="myword-note" id="myword-note" hidden>No double letters in your word. Pick one where every letter is different.</p>
 
   <div class="head">
     <h2>Alphabet</h2>
@@ -795,11 +797,17 @@
     paintMyWord();
   }
 
+  // Your secret word can't repeat a letter (guesses can - a repeat only counts once).
+  function hasDoubles(w) { return new Set(w).size !== w.length; }
+  function badSecret(w) { return notWord(w) || (w.length === LEN && hasDoubles(w)); }
   function paintMyWord() {
     var w = state.myword.join('');
-    myword.classList.toggle('bad', notWord(w));
+    var dbl = w.length === LEN && hasDoubles(w);
+    myword.classList.toggle('bad', badSecret(w));
+    var note = document.getElementById('myword-note');
+    note.hidden = !dbl;
     // Hide shows asterisks instead of the letters, once there's a real word to hide.
-    var hide = !!root.hideWord, on = hide && w.length === LEN && !notWord(w);
+    var hide = !!root.hideWord, on = hide && w.length === LEN && !badSecret(w);
     var btn = document.getElementById('hideword'), mask = document.getElementById('myword-mask');
     btn.textContent = hide ? 'Show' : 'Hide';
     btn.setAttribute('aria-pressed', hide ? 'true' : 'false');
@@ -1385,7 +1393,7 @@
   // My secret word goes up once it's a real word, and can change until the first guess.
   function onlineWord() {
     var w = state.myword.join(''), me = online.seat;
-    if (!isWord(w)) return;
+    if (!isWord(w) || hasDoubles(w)) return;
     var ref = gameRef(online.code);
     dbFor(online.code).runTransaction(function (t) {
       return t.get(ref).then(function (snap) {
