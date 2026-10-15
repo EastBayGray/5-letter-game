@@ -75,10 +75,12 @@
   .head { display: flex; align-items: center; gap: 10px; margin: var(--line) 0 0; }
   h2 { font-weight: 400; font-size: 1.75rem; line-height: var(--line); margin: 0; }
   .info {
-    width: 28px; height: 28px; flex: none; padding: 0; cursor: pointer;
-    font-size: 1.15rem; line-height: 1; color: var(--ink-soft); background: none;
-    border: 2px solid var(--ink-soft); border-radius: 50% 46% 52% 48%;
+    width: 20px; height: 20px; flex: none; padding: 0; cursor: pointer;
+    font-size: .85rem; line-height: 1; color: var(--ink-soft); background: none;
+    border: 1.5px solid var(--ink-soft); border-radius: 50% 46% 52% 48%;
+    position: relative;
   }
+  .info::after { content: ''; position: absolute; inset: -12px; }
   .info[aria-expanded="true"] { color: var(--red); border-color: var(--red); }
   .info:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 2px; }
   .note {
@@ -191,6 +193,10 @@
   /* My word */
   .myword { display: flex; gap: 8px; margin-top: 6px; }
   .myword[hidden] { display: none; }
+  .their-know { display: none; width: 76%; max-width: 360px; margin: calc(var(--line) * 0.5) 0 0 6%; }
+  .mode-cpu .their-know { display: block; }
+  .their-know .found { cursor: default; color: var(--red); font-size: 2rem; padding: 0 2px; }
+  .their-know .circle { padding: 10% 7%; gap: 2px; }
   .myword-note { color: var(--red); margin: 4px 0 0; font-size: 1.1rem; line-height: 1.3; }
   #myword-mask .slot { display: inline-flex; align-items: flex-end; justify-content: center; }
   .slot {
@@ -202,7 +208,7 @@
   .slot:focus { outline: none; border-bottom-color: var(--red); }
 
   /* Guess lists */
-  .lines { list-style: none; margin: 0; padding: 0; }
+  .lines { list-style: none; margin: calc(var(--line) * 1) 0 0; padding: 0; }
   .lines li { display: flex; align-items: center; gap: 12px; height: var(--line); }
   .lines .n {
     width: 24px; flex: none; color: var(--pencil); font-size: 1rem; text-align: right;
@@ -397,7 +403,6 @@
     <p>Tap a letter in a guess to cross it off. Tap again to circle it, and again to clear it. The alphabet updates too, and the mark shows in every guess with that letter.</p>
     <p>Typo? Backspace while typing, or tap the line number to clear that line. If it isn't a real word, the letters go red with a dashed line and you can't give it a number. Tap the little bin at the end of a line to delete it. A new line appears by itself when you start the last one.</p>
   </div>
-  <div class="colhead"><span></span><span>word</span><span>how many</span></div>
   <ol class="lines" id="mine"></ol>
 
   <div class="head">
@@ -409,8 +414,14 @@
     <p>Type the word they ask you. The number of its letters that are in my word fills itself in, and those letters turn red. Each different letter counts once, so a doubled letter only counts one. If it isn't a real word you'll see a red ✗ instead of a number.</p>
     <p>Tap the line number to clear a line, or the little bin at the end to delete it.</p>
   </div>
-  <div class="colhead"><span></span><span>word</span><span>I say</span></div>
   <ol class="lines" id="theirs"></ol>
+  <div class="their-know">
+    <div class="circle" id="their-circle" aria-live="polite">
+      <svg class="loop" viewBox="0 0 210 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M108 6 C 160 4, 205 22, 203 50 C 201 82, 150 96, 100 95 C 46 94, 6 78, 7 49 C 8 20, 52 6, 112 9"/>
+      </svg>
+    </div>
+  </div>
 
   <footer>
     <svg class="doodle corner-flower biro-blue" viewBox="0 0 40 60" aria-hidden="true"><path d="M20 18 L20 6 M20 18 L31 12 M20 18 L32 23 M20 18 L26 30 M20 18 L13 30 M20 18 L8 23 M20 18 L9 12 M20 18 L13 6 M20 18 L27 6"/><circle cx="20" cy="18" r="3.5"/><path d="M20 22 C 21 34, 18 46, 21 58"/><path d="M20 40 C 14 35, 10 37, 12 41 C 14 44, 18 43, 20 40"/></svg>
@@ -1281,6 +1292,37 @@
       }
     }
     renderTally(online.mode === 'pass' ? '-' : v.them ? v.oppName : '');
+    if (online.mode === 'cpu') paintTheirKnow(g, v);
+  }
+
+  // Playing the computer: a circle under "The words they've asked me" showing which letters
+  // of my word its clues have proved. A letter counts once every word that still fits
+  // all its numbers contains it.
+  function paintTheirKnow(g, v) {
+    var box = el('their-circle'), mineW = v.me.word || '';
+    box.querySelectorAll('.found, .empty').forEach(function (x) { x.remove(); });
+    var asked = v.guesses.filter(function (x) { return x.by !== online.seat; });
+    var known = [];
+    if (mineW && asked.length) {
+      var fits = allWords(g.len).filter(function (c) {
+        if (!noDoubles(c)) return false;
+        for (var i = 0; i < asked.length; i++) if (+common(asked[i].w, c) !== +asked[i].n) return false;
+        return true;
+      });
+      if (fits.length) known = mineW.split('').filter(function (l) {
+        return fits.every(function (c) { return c.indexOf(l) >= 0; });
+      });
+    }
+    if (v.winner) known = mineW.split('');
+    if (!known.length) {
+      var e = document.createElement('p'); e.className = 'empty';
+      e.textContent = 'Letters the computer knows are in your word';
+      box.appendChild(e); return;
+    }
+    known.forEach(function (l) {
+      var f = document.createElement('span'); f.className = 'found'; f.textContent = l;
+      box.appendChild(f);
+    });
   }
 
   // Fireworks and a big WINNER for whoever gets the word. Tap anywhere to close.
