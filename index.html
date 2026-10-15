@@ -194,6 +194,7 @@
   .myword { display: flex; gap: 8px; margin-top: 6px; }
   .myword[hidden] { display: none; }
   .setting-up #online ~ *:not(footer) { display: none !important; }
+  .setting-up #reset { display: none !important; }
   .form-title { margin: 0 0 6px; font-size: 1.4rem; }
   .their-know { display: none; width: 76%; max-width: 360px; margin: calc(var(--line) * 0.5) 0 0 6%; }
   .mode-cpu .their-know { display: block; }
@@ -1101,13 +1102,14 @@
     formMode = mode; showErr('');
     onCode.hidden = mode !== 'join';
     onName2.hidden = mode !== 'pass';
+    onName.hidden = mode === 'cpu'; // the computer doesn't need your name
     onName.placeholder = mode === 'pass' ? 'First player' : 'Your name';
     onName2.placeholder = 'Second player';
     el('on-go').textContent = mode === 'join' ? 'Join' : 'Start';
     el('on-form-title').textContent = mode === 'cpu' ? 'Play the computer' : mode === 'join' ? 'Join a game' : 'Start an online game';
     if (code) onCode.value = code;
     showPanel('form');
-    (onName.value ? (mode === 'join' && !onCode.value ? onCode : null) : onName)?.focus();
+    if (mode !== 'cpu') (onName.value ? (mode === 'join' && !onCode.value ? onCode : null) : onName)?.focus();
   }
   el('on-cancel').addEventListener('click', function () { showPanel('off'); showHome(); });
   onCode.addEventListener('input', function () { onCode.value = onCode.value.replace(/[^a-z]/gi, '').toUpperCase().slice(0, 4); });
@@ -1117,10 +1119,10 @@
   function other(seat) { return seat === 'A' ? 'B' : 'A'; }
 
   el('on-go').addEventListener('click', function () {
+    if (formMode === 'cpu') { startLocal('cpu', 'Me', 'Computer'); return; }
     var name = onName.value.trim();
     if (!name) { showErr('Put your name in first.'); onName.focus(); return; }
     try { localStorage.setItem('jotter-name', name); } catch (e) {}
-    if (formMode === 'cpu') { startLocal('cpu', name, 'Computer'); return; }
     if (formMode === 'pass') {
       var name2 = onName2.value.trim();
       if (!name2) { showErr("Put the other player's name in."); onName2.focus(); return; }
