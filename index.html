@@ -201,7 +201,9 @@
   .is-online .online { margin-top: 0; }
   /* Their guesses folded to the latest one during a game */
   .is-online #theirs.folded > li:not(:last-child) { display: none; }
-  .fold-btn { margin: 0 0 0 auto; flex: none; }
+  .fold-btn { margin: 0 0 0 auto; flex: none; border-color: transparent !important; min-width: 44px; min-height: 36px; padding: 0; display: inline-grid; place-items: center; }
+  .fold-btn svg { width: 28px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
+  .fold-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
   /* Alphabet: an A–Z icon instead of Hide / Show all. Crossed through in red while shrunk. */
   .az-btn { position: relative; margin-left: auto; border-color: transparent !important; min-width: 52px; min-height: 36px; font-size: 1.2rem; letter-spacing: .02em; }
   .az-btn svg { position: absolute; inset: 4px 6px; width: calc(100% - 12px); height: calc(100% - 8px); fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; opacity: 0; pointer-events: none; }
@@ -386,7 +388,10 @@
   .home-games .meta { color: var(--pencil); font-size: 1.05rem; margin-left: 8px; }
   .home-games .meta.mine { color: var(--red); }
   .home-games .x { flex: none; width: 36px; height: var(--line); background: none; border: 0; color: var(--pencil); font-size: 1.5rem; cursor: pointer; }
-  .home-tally { color: var(--pencil); font-size: 1.1rem; margin: 14px 0 0; }
+  .home-tally { color: var(--ink); font-size: 1.1rem; margin: 14px 0 0; }
+  .home-tally li { height: var(--line); }
+  .home-tally .who { font-size: 1.3rem; }
+  .home-tally .meta { margin-left: auto; padding-right: 8px; }
   .cover-inner { min-height: 100%; display: grid; place-content: center; text-align: center; gap: 16px; padding: 30px 24px 30px 66px; }
   .cover-msg { font-size: 2.3rem; line-height: 1.15; margin: 0; }
   .cover-sub { color: var(--pencil); font-size: 1.25rem; line-height: 1.4; margin: 0; }
@@ -541,7 +546,7 @@
       <h2>My games</h2>
       <ul id="home-list"></ul>
     </div>
-    <p class="home-tally" id="home-tally" hidden></p>
+    <div class="home-tally home-games" id="home-tally" hidden></div>
   </div>
 </div>
 
@@ -1221,9 +1226,12 @@
     var inGame = document.body.classList.contains('is-online');
     ol.classList.toggle('folded', inGame && n > 1 && !theirsOpen);
     theirsMore.hidden = !inGame || n <= 1;
-    theirsMore.textContent = theirsOpen ? 'Show less' : 'Show all';
-    // Sit the button at the right-hand end of their latest guess.
-    if (n > 1) ol.lastElementChild.appendChild(theirsMore);
+    theirsMore.innerHTML = '<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M4 5 L14 13 L24 5"/></svg>';
+    theirsMore.setAttribute('aria-label', theirsOpen ? 'Show only their latest guess' : 'Show all their guesses');
+    theirsMore.setAttribute('aria-expanded', theirsOpen ? 'true' : 'false');
+    // The arrow sits at the right-hand end of the Their guesses heading.
+    var head = el('tag-theirs').parentNode;
+    if (theirsMore.parentNode !== head) head.appendChild(theirsMore);
   }
   theirsMore.addEventListener('click', function () { theirsOpen = !theirsOpen; foldTheirs(); });
   var baseRenderList = renderList;
@@ -1857,7 +1865,28 @@
     });
     el('home-games').hidden = !list.children.length;
     var t = tallyText('');
-    el('home-tally').textContent = t; el('home-tally').hidden = !t;
+    // Score as a list: one line per opponent, most-played first.
+    var res = root.results || {}, by = {};
+    Object.keys(res).forEach(function (c) {
+      var r = res[c], k = (r.opp || '').trim().toLowerCase();
+      if (!k) return;
+      var s = by[k] || (by[k] = { name: r.opp.trim(), me: 0, them: 0 });
+      if (r.won) s.me++; else s.them++;
+    });
+    var box = el('home-tally'); box.innerHTML = '';
+    var opps = Object.keys(by).sort(function (a, b) { return (by[b].me + by[b].them) - (by[a].me + by[a].them); });
+    if (opps.length) {
+      var h = document.createElement('h2'); h.textContent = 'Score'; box.appendChild(h);
+      var ul = document.createElement('ul');
+      opps.forEach(function (k) {
+        var li = document.createElement('li'), who = document.createElement('span'), sc = document.createElement('span');
+        who.className = 'who'; who.textContent = 'v ' + by[k].name;
+        sc.className = 'meta'; sc.textContent = 'won ' + by[k].me + ' · lost ' + by[k].them;
+        li.appendChild(who); li.appendChild(sc); ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    box.hidden = !opps.length;
   }
   // Online games may have moved on while the page was closed, so check them.
   function refreshHome() {
