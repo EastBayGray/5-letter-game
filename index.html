@@ -425,7 +425,7 @@
 
   <div class="head guess-part">
     <svg class="doodle in-margin biro-green" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(20 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
-    <h2>The words they've asked me</h2><span class="turn-tag" id="tag-theirs" hidden>their go</span>
+    <h2>Their guesses</h2><span class="turn-tag" id="tag-theirs" hidden>their go</span>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-theirs" aria-label="How this section works">i</button>
   </div>
   <div class="note guess-part" id="note-theirs" hidden>
@@ -1327,7 +1327,7 @@
     if (online.mode === 'cpu') paintTheirKnow(g, v);
   }
 
-  // Playing the computer: a circle under "The words they've asked me" showing which letters
+  // Playing the computer: a circle under "Their guesses" showing which letters
   // of my word its clues have proved. A letter counts once every word that still fits
   // all its numbers contains it.
   function paintTheirKnow(g, v) {
