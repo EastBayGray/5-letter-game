@@ -181,6 +181,77 @@
     border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   }
   .pen-btn:active { transform: translateY(1px); }
+  /* ===== Compact in-game layout ===== */
+  .mini-title, .tally-mini { display: none; }
+  /* Same title and wavy underline as the start page, just smaller and centred */
+  .is-online .sheet > .cactus { display: none; }
+  .is-online #title { font-size: 2.3rem; text-align: center; margin: 0; }
+  .is-online .sheet > .underline { width: 46%; max-width: 210px; height: 10px; margin: 0 auto 10px; }
+  .is-online .tally-mini { display: block; flex-basis: 100%; text-align: center; color: var(--pencil); font-size: 1.05rem; margin-top: 2px; }
+  .is-online #on-live .row { justify-content: center; }
+  /* Home: circled in pen with a little house, instead of a box */
+  #on-leave { position: relative; border-color: transparent; padding: 6px 14px; display: inline-flex; align-items: center; justify-content: center; min-width: 52px; min-height: 40px; }
+  #on-leave .home-ring { position: absolute; inset: -3px -4px; width: calc(100% + 8px); height: calc(100% + 6px); fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+  #on-leave .home-house { width: 26px; height: 26px; fill: none; stroke: var(--red); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .is-online .tally-mini:empty { display: none; }
+  .is-online #on-tally { display: none !important; }
+  .is-online #on-live { display: flex; flex-direction: column; }
+  .is-online #on-live .row { order: 1; }
+  .is-online #on-live .status { order: 2; margin: 8px 0 0; }
+  .is-online .online { margin-top: 0; }
+  /* Their guesses folded to the latest one during a game */
+  .is-online #theirs.folded > li:not(:last-child) { display: none; }
+  .fold-btn { margin: 0 0 0 auto; flex: none; }
+  /* Alphabet: an A–Z icon instead of Hide / Show all. Crossed through in red while shrunk. */
+  .az-btn { position: relative; margin-left: auto; border-color: transparent !important; min-width: 52px; min-height: 36px; font-size: 1.2rem; letter-spacing: .02em; }
+  .az-btn svg { position: absolute; inset: 4px 6px; width: calc(100% - 12px); height: calc(100% - 8px); fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; opacity: 0; pointer-events: none; }
+  .az-btn[aria-pressed="true"] { color: var(--red); }
+  .az-btn[aria-pressed="true"] svg { opacity: 1; }
+  /* Home: a house in the top-left corner during a game */
+  .is-online #on-leave { position: absolute; left: 56px; top: calc(var(--line) * 1 + 2px); z-index: 2; }
+  /* My word: an eye instead of Hide/Show */
+  .eye-btn { border-color: transparent !important; padding: 4px 6px; line-height: 0; min-width: 44px; min-height: 36px; display: inline-grid; place-items: center; }
+  .eye-btn svg { width: 32px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .eye-btn svg .pupil { fill: var(--ink); stroke: none; }
+  .eye-btn[aria-pressed="true"] svg { stroke: var(--red); }
+  .word-row { display: flex; align-items: flex-end; gap: 8px; }
+  #hideword2 { display: none; margin-left: auto; }
+  /* Once your word is in during a game: no heading, just the word in green biro */
+  .is-online:not(.no-word) #myword-head { display: none; }
+  .is-online.no-word #hideword { display: none; } /* nothing to hide until your word is in */
+  .is-online:not(.no-word) #hideword2 { display: inline-grid; }
+  .is-online:not(.no-word) .word-row { margin-top: 4px; display: grid; grid-template-columns: 1fr auto 1fr; }
+  .is-online:not(.no-word) .word-row > .myword { grid-column: 2; }
+  .is-online:not(.no-word) #hideword2 { grid-column: 3; justify-self: end; margin-left: 0; }
+  .is-online:not(.no-word) #myword .slot, .is-online:not(.no-word) #myword-mask .slot { color: #2E7D4F; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .is-online:not(.no-word) #myword .slot, :root:not([data-theme="light"]) .is-online:not(.no-word) #myword-mask .slot { color: #7CCB9C; } }
+  :root[data-theme="dark"] .is-online:not(.no-word) #myword .slot, :root[data-theme="dark"] .is-online:not(.no-word) #myword-mask .slot { color: #7CCB9C; }
+  /* Their guess numbers in blue biro so you can see which guess they're on */
+  #theirs .n { color: #2340A0; font-size: 1.35rem; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #theirs .n { color: #8FA8F0; } }
+  :root[data-theme="dark"] #theirs .n { color: #8FA8F0; }
+  /* Alphabet over 3 lines (9 a row), slightly smaller */
+  .alphabet, .alphabet.x { grid-template-columns: repeat(9, 1fr) !important; gap: 2px 0; }
+  .key { font-size: 1.4rem; height: 40px; }
+  .fold-btn[hidden] { display: none; }
+  /* Mini alphabet pinned to the top once the real one scrolls away */
+  .mini-abc {
+    position: fixed; left: 0; right: 0; top: 0; z-index: 40;
+    padding: calc(env(safe-area-inset-top, 0px) + 4px) 10px 4px 58px;
+    background: var(--paper); border-bottom: 1.5px solid var(--rule);
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    display: grid; grid-template-columns: repeat(13, 1fr); max-width: 620px; margin: 0 auto;
+    transform: translateY(-110%); transition: transform .18s ease; pointer-events: none;
+  }
+  .mini-abc.show { transform: none; pointer-events: auto; }
+  .mini-abc button {
+    font: inherit; font-size: 1.2rem; line-height: 1.5; color: var(--ink); background: none; border: 0;
+    padding: 0; min-height: 30px; cursor: pointer; position: relative;
+  }
+  .mini-abc button.out { color: var(--pencil); opacity: .55; text-decoration: line-through; text-decoration-thickness: 2px; }
+  .mini-abc button.in { color: var(--red); }
+  .mini-abc button.in span { border: 1.5px solid var(--red); border-radius: 50%; padding: 0 4px; }
+  @media (prefers-reduced-motion: reduce) { .mini-abc { transition: none; } }
   /* Scramble: jumbled letters between two hand-drawn swap arrows instead of a box. */
   #scramble { position: relative; border-color: transparent; }
   #scramble .scr-arrows { position: absolute; inset: -4px -6px; width: calc(100% + 12px); height: calc(100% + 8px); fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
@@ -364,28 +435,33 @@
     <div id="on-live" hidden>
       <p class="status" id="on-status"></p>
       <div class="row">
+        <span class="mini-title" aria-hidden="true">Jotter Race</span>
         <span id="on-code-wrap">Code <span class="codebox" id="on-code-show"></span></span>
         <button class="pen-btn small" id="on-share" type="button">Share</button>
         <button class="pen-btn small" id="on-nudge" type="button" hidden>Nudge</button>
         <button class="pen-btn small" id="on-rematch" type="button" hidden>Rematch</button>
-        <button class="pen-btn small" id="on-leave" type="button">Home</button>
+        <button class="pen-btn small" id="on-leave" type="button" aria-label="Home"><svg class="home-ring" viewBox="0 0 100 44" preserveAspectRatio="none" aria-hidden="true"><path d="M58 4 C 86 3, 98 12, 97 22 C 96 34, 76 41, 50 41 C 22 41, 4 34, 4 22 C 4 10, 24 3, 52 4 L 64 2"/></svg><svg class="home-house" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10 L10 3.5 L17 10 M5.5 8 L5.5 16.5 L14.5 16.5 L14.5 8 M8.5 16.5 L8.5 12 L11.5 12 L11.5 16.5"/></svg></button>
+        <span class="tally-mini" id="on-tally-mini"></span>
       </div>
     </div>
   </section>
 
-  <div class="head">
+  <div class="head" id="myword-head">
     <svg class="doodle in-margin biro-blue" viewBox="0 0 40 60" aria-hidden="true"><g transform="rotate(0 20 18)"><ellipse cx="20" cy="10" rx="4" ry="7"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(72 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(144 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(216 20 18)"/><ellipse cx="20" cy="10" rx="4" ry="7" transform="rotate(288 20 18)"/></g><circle class="dot" cx="20" cy="18" r="2.4"/><path d="M20 26 C 18 36, 22 46, 19 58"/><path d="M20 44 C 26 39, 31 41, 28 46 C 25 49, 21 48, 20 44"/></svg>
     <h2>My word</h2>
-    <button class="pen-btn small" id="hideword" type="button" aria-pressed="false">Hide</button>
+    <button class="pen-btn small eye-btn" id="hideword" type="button" aria-pressed="false" aria-label="Hide my word"></button>
   </div>
+  <div class="word-row">
   <div class="myword" id="myword"></div>
   <div class="myword" id="myword-mask" aria-label="My word, hidden" hidden></div>
+  <button class="pen-btn small eye-btn" id="hideword2" type="button" aria-pressed="false" aria-label="Hide my word"></button>
+  </div>
   <p class="myword-note" id="myword-note" hidden>No double letters in your word. Pick one where every letter is different.</p>
 
   <div class="head after-word">
     <h2>Alphabet</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
-    <button class="pen-btn small" id="focus" type="button" aria-pressed="false">Hide</button>
+    <button class="pen-btn small az-btn" id="focus" type="button" aria-pressed="false" aria-label="Hide the letters you've ruled out"><span>A–Z</span><svg viewBox="0 0 40 24" aria-hidden="true"><path d="M3 20 L37 4"/></svg></button>
   </div>
   <div class="note after-word" id="note-alpha" hidden>
     <p>Tap a letter once to cross it off, twice to put it in the circle, and a third time to clear it.</p>
@@ -433,6 +509,7 @@
     <p>Tap the line number to clear a line, or the little bin at the end to delete it.</p>
   </div>
   <ol class="lines guess-part" id="theirs"></ol>
+  <button class="pen-btn small fold-btn guess-part" id="theirs-more" type="button" hidden></button>
   <div class="their-know guess-part">
     <div class="circle" id="their-circle" aria-live="polite">
       <svg class="loop" viewBox="0 0 210 100" preserveAspectRatio="none" aria-hidden="true">
@@ -447,6 +524,7 @@
     <button class="pen-btn" id="reset" type="button">Start a new game</button>
   </footer>
 </main>
+<div class="mini-abc" id="mini-abc" role="group" aria-label="Alphabet (shortcut)"></div>
 
 <div class="home" id="home">
   <div class="home-inner">
@@ -690,7 +768,7 @@
     document.querySelectorAll('#mine .cell').forEach(paintCell);
     alphabet.classList.toggle('focus', focusOn());
     focusBtn.setAttribute('aria-pressed', String(focusOn()));
-    focusBtn.textContent = focusOn() ? 'Show all' : 'Hide';
+    focusBtn.setAttribute('aria-label', focusOn() ? 'Show the whole alphabet' : "Hide the letters you've ruled out");
     renderOrbit();
   }
 
@@ -838,15 +916,20 @@
     note.hidden = !dbl;
     // Hide shows asterisks instead of the letters, once there's a real word to hide.
     var hide = !!root.hideWord, on = hide && w.length === LEN && !badSecret(w);
-    var btn = document.getElementById('hideword'), mask = document.getElementById('myword-mask');
-    btn.textContent = hide ? 'Show' : 'Hide';
-    btn.setAttribute('aria-pressed', hide ? 'true' : 'false');
+    var btns = [document.getElementById('hideword'), document.getElementById('hideword2')], mask = document.getElementById('myword-mask');
+    btns.forEach(function (btn) {
+      btn.innerHTML = hide ? EYE_SHUT : EYE_OPEN;
+      btn.setAttribute('aria-label', hide ? 'Show my word' : 'Hide my word');
+      btn.setAttribute('aria-pressed', hide ? 'true' : 'false');
+    });
     myword.hidden = on; mask.hidden = !on;
     if (on) mask.innerHTML = state.myword.map(function () { return '<span class="slot">*</span>'; }).join('');
   }
-  document.getElementById('hideword').addEventListener('click', function () {
-    root.hideWord = !root.hideWord; save(); paintMyWord();
-  });
+  var EYE_OPEN = '<svg viewBox="0 0 32 20" aria-hidden="true"><path d="M2 10 C 8 2, 24 2, 30 10 C 24 18, 8 18, 2 10 Z"/><circle cx="16" cy="10" r="3.6" class="pupil"/></svg>';
+  var EYE_SHUT = '<svg viewBox="0 0 32 20" aria-hidden="true"><path d="M2 8 C 8 15, 24 15, 30 8"/><path d="M8 12.5 L6 16 M16 14 L16 18 M24 12.5 L26 16"/></svg>';
+  function hideToggle() { root.hideWord = !root.hideWord; save(); paintMyWord(); }
+  document.getElementById('hideword').addEventListener('click', hideToggle);
+  document.getElementById('hideword2').addEventListener('click', hideToggle);
   function updateTheirScores() {
     var mine = state.myword.join('');
     document.querySelectorAll('#theirs li').forEach(function (li, idx) {
@@ -1102,6 +1185,49 @@
   function dbFor(code) { return isLocal(code) ? localDb : db; }
 
   var el = function (id) { return document.getElementById(id); };
+
+  // ===== Mini alphabet: a slim A–Z pinned to the top once the real alphabet scrolls away =====
+  var mini = el('mini-abc'), homeBox = el('home');
+  function renderMini() {
+    var keys = Array.prototype.slice.call(alphabet.querySelectorAll('.key')).filter(function (b) {
+      return getComputedStyle(b).display !== 'none';
+    });
+    keys.sort(function (a, b) { return (+a.style.order || 0) - (+b.style.order || 0); });
+    mini.innerHTML = '';
+    keys.forEach(function (b) {
+      var l = b.dataset.letter, m = state.marks[l] || '';
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = m; x.innerHTML = '<span>' + l + '</span>';
+      x.setAttribute('aria-label', b.getAttribute('aria-label') || l);
+      x.addEventListener('click', function () { setMark(l, nextMark(state.marks[l] || '')); });
+      mini.appendChild(x);
+    });
+    mini.style.gridTemplateColumns = 'repeat(' + Math.min(13, Math.max(keys.length, 1)) + ', 1fr)';
+    placeMini();
+  }
+  function placeMini() {
+    var visible = alphabet.offsetParent !== null && homeBox.hidden && mini.children.length > 0;
+    mini.classList.toggle('show', visible && alphabet.getBoundingClientRect().bottom < mini.offsetHeight + 10);
+  }
+  window.addEventListener('scroll', function () { requestAnimationFrame(placeMini); }, { passive: true });
+  window.addEventListener('resize', placeMini);
+  var baseRenderMarks = renderMarks;
+  renderMarks = function () { baseRenderMarks.apply(this, arguments); renderMini(); };
+
+  // ===== Their guesses: during a game show just the latest one, with a button for the rest =====
+  var theirsOpen = false, theirsMore = el('theirs-more');
+  function foldTheirs() {
+    var ol = el('theirs'), n = ol.children.length;
+    var inGame = document.body.classList.contains('is-online');
+    ol.classList.toggle('folded', inGame && n > 1 && !theirsOpen);
+    theirsMore.hidden = !inGame || n <= 1;
+    theirsMore.textContent = theirsOpen ? 'Show less' : 'Show all';
+    // Sit the button at the right-hand end of their latest guess.
+    if (n > 1) ol.lastElementChild.appendChild(theirsMore);
+  }
+  theirsMore.addEventListener('click', function () { theirsOpen = !theirsOpen; foldTheirs(); });
+  var baseRenderList = renderList;
+  renderList = function (name) { baseRenderList.apply(this, arguments); if (name === 'theirs') foldTheirs(); };
   var onOff = el('on-off'), onForm = el('on-form'), onLive = el('on-live');
   var onName = el('on-name'), onName2 = el('on-name2'), onCode = el('on-code'), onErr = el('on-err'), onStatus = el('on-status');
   var formMode = 'new';
@@ -1425,6 +1551,7 @@
   function renderTally(only) {
     var tally = el('on-tally'), text = tallyText(only);
     tally.textContent = text; tally.hidden = !text;
+    el('on-tally-mini').textContent = text.replace(/^Score:\s*/, '');
   }
 
   function lockOnline(v) {
