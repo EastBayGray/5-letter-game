@@ -181,6 +181,19 @@
     border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   }
   .pen-btn:active { transform: translateY(1px); }
+  /* Scramble: jumbled letters between two hand-drawn swap arrows instead of a box. */
+  #scramble { position: relative; border-color: transparent; }
+  #scramble .scr-arrows { position: absolute; inset: -4px -6px; width: calc(100% + 12px); height: calc(100% + 8px); fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+  #scramble .scr-word b { display: inline-block; font-weight: normal; }
+  #scramble .scr-word b:nth-child(odd) { transform: translateY(-2px) rotate(-8deg); }
+  #scramble .scr-word b:nth-child(even) { transform: translateY(2px) rotate(7deg); }
+  #scramble .scr-word b:nth-child(3n) { color: var(--red); }
+  #scramble.spin .scr-arrows { animation: scr-turn .5s ease-in-out; }
+  #scramble.spin .scr-word b { animation: scr-hop .5s ease-in-out; }
+  #scramble.spin .scr-word b:nth-child(even) { animation-delay: .06s; }
+  @keyframes scr-turn { 50% { transform: rotate(8deg) scale(1.06); } }
+  @keyframes scr-hop { 40% { transform: translateY(-7px) rotate(14deg); } 70% { transform: translateY(3px) rotate(-10deg); } }
+  @media (prefers-reduced-motion: reduce) { #scramble.spin .scr-arrows, #scramble.spin .scr-word b { animation: none; } }
   .pen-btn:focus-visible, .found:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 3px; }
   .xbin { width: 54px; height: 60px; display: grid; place-items: center; border-radius: 8px; background: none; border: 0; padding: 0; cursor: pointer; }
   .bin:focus-visible { outline: 2px dashed var(--ink-soft); outline-offset: 3px; }
@@ -193,7 +206,7 @@
   /* My word */
   .myword { display: flex; gap: 8px; margin-top: 6px; }
   .myword[hidden] { display: none; }
-  .setting-up #online ~ *:not(footer) { display: none !important; }
+  .setting-up #online ~ *:not(footer), .loading #online ~ *:not(footer) { display: none !important; }
   .setting-up #reset { display: none !important; }
   .pre-game .guess-part, .no-word .after-word { display: none !important; }
   .form-title { margin: 0 0 6px; font-size: 1.4rem; }
@@ -394,7 +407,7 @@
       </svg>
     </div>
     <div class="side">
-      <button class="pen-btn" id="scramble" type="button">Scramble</button>
+      <button class="pen-btn" id="scramble" type="button" aria-label="Scramble"><svg class="scr-arrows" viewBox="0 0 120 48" preserveAspectRatio="none" aria-hidden="true"><path d="M10 14 C 30 2, 80 0, 106 10"/><path d="M98 4 L107 10 L97 15"/><path d="M110 34 C 90 46, 40 48, 14 38"/><path d="M22 44 L13 38 L23 33"/></svg><span class="scr-word" aria-hidden="true"><b>S</b><b>c</b><b>r</b><b>a</b><b>m</b><b>b</b><b>l</b><b>e</b></span></button>
     </div>
   </div>
 
@@ -769,6 +782,7 @@
 
 
   document.getElementById('scramble').addEventListener('click', function () {
+    var sb = this; sb.classList.remove('spin'); void sb.offsetWidth; sb.classList.add('spin');
     var a = state.order.slice();
     var before = a.join('');
     for (var t = 0; t < 6 && a.join('') === before; t++) {
@@ -1185,6 +1199,8 @@
     if (online && online.unsub) online.unsub();
     online = { code: code, seat: seat, data: null, sig: '', unsub: null };
     document.body.classList.add('is-online');
+    // Keep the sheet hidden until the game's details arrive, so nothing flashes up.
+    document.body.classList.add('loading');
     el('on-code-show').textContent = code;
     el('on-code-wrap').hidden = isLocal(code);
     el('on-share').hidden = isLocal(code);
@@ -1203,7 +1219,7 @@
     if (online && online.unsub) online.unsub();
     clearTimeout(cpuTimer); cpuTimer = null;
     el('cover').hidden = true;
-    document.body.classList.remove('mode-cpu', 'mode-pass', 'pre-game', 'no-word');
+    document.body.classList.remove('mode-cpu', 'mode-pass', 'pre-game', 'no-word', 'loading');
     online = null; root.online = null;
     document.body.classList.remove('is-online');
     el('tag-mine').hidden = el('tag-theirs').hidden = true;
@@ -1244,6 +1260,7 @@
     document.body.classList.toggle('pre-game', !pre.ready && !pre.winner);
     // Alphabet, circle and Scramble wait until your own word is in.
     document.body.classList.toggle('no-word', !(pre.me && pre.me.word) && !pre.winner);
+    document.body.classList.remove('loading');
     document.body.classList.toggle('mode-pass', online.mode === 'pass');
     if (LEN !== g.len) { LEN = g.len; }
     updateInfo(online.code, g, online.seat);
