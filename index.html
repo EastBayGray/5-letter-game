@@ -196,6 +196,8 @@
   #on-leave .home-house { width: 30px; height: 30px; fill: none; stroke: var(--red); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .is-online .tally-mini:empty, .mode-cpu .tally-mini { display: none; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* No (i) help buttons or their notes anywhere */
+  .info, .note { display: none !important; }
   .is-online #on-tally { display: none !important; }
   .is-online #on-live { display: flex; flex-direction: column; }
   .is-online #on-live .row { order: 1; }
@@ -208,6 +210,8 @@
   .fold-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
   /* Alphabet: an A–Z icon instead of Hide / Show all. Crossed through in red while shrunk. */
   .az-btn { position: relative; margin-left: auto; border-color: transparent !important; min-width: 52px; min-height: 36px; font-size: 1.2rem; letter-spacing: .02em; }
+  #alpha-head { display: none; }
+  .alphabet .az-btn { margin: 0; min-width: 0; padding: 0 2px; font-size: 1rem; white-space: nowrap; letter-spacing: 0; color: var(--pencil); justify-self: center; align-self: center; overflow: visible; }
   .az-btn svg { position: absolute; inset: 4px 6px; width: calc(100% - 12px); height: calc(100% - 8px); fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; opacity: 0; pointer-events: none; }
   .az-btn[aria-pressed="true"] { color: var(--red); }
   .az-btn[aria-pressed="true"] svg { opacity: 1; }
@@ -219,13 +223,15 @@
   .eye-btn svg .pupil { fill: var(--ink); stroke: none; }
   .eye-btn[aria-pressed="true"] svg { stroke: var(--red); }
   .word-row { display: flex; align-items: flex-end; gap: 8px; }
-  #hideword2 { display: none; margin-left: auto; }
+  #hideword2 { display: none; margin-left: auto; min-width: 36px; padding: 4px 0; }
   /* Once your word is in during a game: no heading, just the word in green biro */
   .is-online:not(.no-word) #myword-head { display: none; }
   .is-online.no-word #hideword { display: none; } /* nothing to hide until your word is in */
   .is-online:not(.no-word) #hideword2 { display: inline-grid; }
-  .is-online:not(.no-word) .word-row { margin-top: 4px; display: grid; grid-template-columns: 1fr auto 1fr; }
-  .is-online:not(.no-word) .word-row > .myword { grid-column: 2; }
+  .is-online:not(.no-word) .word-row { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .is-online:not(.no-word) .word-row > .myword { justify-content: center; min-width: 0; width: 100%; max-width: calc(var(--len, 5) * 52px - 8px); }
+  .is-online:not(.no-word) #myword-mask .slot { flex: 1; max-width: 44px; }
+  .is-online:not(.no-word) #hideword2 { display: inline-grid; margin: 2px 0 20px; min-height: 28px; padding: 0 8px; }
   .is-online:not(.no-word) #hideword2 { grid-column: 3; justify-self: end; margin-left: 0; }
   .is-online:not(.no-word) #myword .slot, .is-online:not(.no-word) #myword-mask .slot { color: #2E7D4F; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .is-online:not(.no-word) #myword .slot, :root:not([data-theme="light"]) .is-online:not(.no-word) #myword-mask .slot { color: #7CCB9C; } }
@@ -466,7 +472,7 @@
   </div>
   <p class="myword-note" id="myword-note" hidden>No double letters in your word. Pick one where every letter is different.</p>
 
-  <div class="head after-word">
+  <div class="head after-word" id="alpha-head">
     <h2 class="sr-only">Alphabet</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
     <button class="pen-btn small az-btn" id="focus" type="button" aria-pressed="false" aria-label="Hide the letters you've ruled out"><span>A–Z</span><svg viewBox="0 0 40 24" aria-hidden="true"><path d="M3 20 L37 4"/></svg></button>
@@ -634,8 +640,13 @@
     lengths.querySelectorAll('.len').forEach(function (b) {
       b.setAttribute('aria-checked', String(+b.dataset.len === LEN));
     });
-    var cellW = LEN >= 7 ? 26 : 32;
-    document.documentElement.style.setProperty('--cell-font', LEN >= 7 ? '1.55rem' : '1.9rem');
+    document.documentElement.style.setProperty('--len', LEN);
+    // Size guess letters so a full line (number, letters, score, bin, tick) fits the screen,
+    // and every list uses the same size so My guesses and Their guesses line up.
+    var sheetEl = document.querySelector('.sheet');
+    var lineW = sheetEl ? sheetEl.clientWidth - 78 : 312;
+    var cellW = Math.max(20, Math.min(32, Math.floor((lineW - 160 - 2 * (LEN - 1)) / LEN)));
+    document.documentElement.style.setProperty('--cell-font', cellW >= 30 ? '1.9rem' : cellW >= 25 ? '1.65rem' : '1.45rem');
     document.querySelectorAll('.cell').forEach(function (c) { c.style.maxWidth = cellW + 'px'; c.style.width = cellW + 'px'; });
     document.documentElement.style.setProperty('--word-w', (cellW * LEN + 2 * (LEN - 1)) + 'px');
   }
@@ -925,7 +936,8 @@
     var note = document.getElementById('myword-note');
     note.hidden = !dbl;
     // Hide shows asterisks instead of the letters, once there's a real word to hide.
-    var hide = !!root.hideWord, on = hide && w.length === LEN && !badSecret(w);
+    // Hiding is remembered per game, so every new game starts with your word showing.
+    var hide = !!(root.hideWords || {})[hideKey()], on = hide && w.length === LEN && !badSecret(w);
     var btns = [document.getElementById('hideword'), document.getElementById('hideword2')], mask = document.getElementById('myword-mask');
     btns.forEach(function (btn) {
       btn.innerHTML = hide ? EYE_SHUT : EYE_OPEN;
@@ -937,7 +949,12 @@
   }
   var EYE_OPEN = '<svg viewBox="0 0 32 20" aria-hidden="true"><path d="M2 10 C 8 2, 24 2, 30 10 C 24 18, 8 18, 2 10 Z"/><circle cx="16" cy="10" r="3.6" class="pupil"/></svg>';
   var EYE_SHUT = '<svg viewBox="0 0 32 20" aria-hidden="true"><path d="M2 8 C 8 15, 24 15, 30 8"/><path d="M8 12.5 L6 16 M16 14 L16 18 M24 12.5 L26 16"/></svg>';
-  function hideToggle() { root.hideWord = !root.hideWord; save(); paintMyWord(); }
+  function hideKey() { return online ? online.code : 'sheet'; }
+  function hideToggle() {
+    var hw = root.hideWords = root.hideWords || {}, k = hideKey();
+    if (hw[k]) delete hw[k]; else hw[k] = true;
+    save(); paintMyWord();
+  }
   document.getElementById('hideword').addEventListener('click', hideToggle);
   document.getElementById('hideword2').addEventListener('click', hideToggle);
   function updateTheirScores() {
@@ -1198,6 +1215,9 @@
 
   // ===== Mini alphabet: a slim A–Z pinned to the top once the real alphabet scrolls away =====
   var mini = el('mini-abc'), homeBox = el('home');
+  // The A–Z button lives in the alphabet itself, in the spare spot after Z.
+  var azBtn = el('focus');
+  azBtn.style.order = 999; alphabet.appendChild(azBtn);
   function renderMini() {
     var keys = Array.prototype.slice.call(alphabet.querySelectorAll('.key')).filter(function (b) {
       return getComputedStyle(b).display !== 'none';
@@ -1240,7 +1260,7 @@
   }
   theirsMore.addEventListener('click', function () { theirsOpen = !theirsOpen; foldTheirs(); });
   var baseRenderList = renderList;
-  renderList = function (name) { baseRenderList.apply(this, arguments); if (name === 'theirs') foldTheirs(); };
+  renderList = function (name) { baseRenderList.apply(this, arguments); paintLength(); if (name === 'theirs') foldTheirs(); };
   var onOff = el('on-off'), onForm = el('on-form'), onLive = el('on-live');
   var onName = el('on-name'), onName2 = el('on-name2'), onCode = el('on-code'), onErr = el('on-err'), onStatus = el('on-status');
   var formMode = 'new';
