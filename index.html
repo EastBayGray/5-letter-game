@@ -192,8 +192,10 @@
   /* Home: circled in pen with a little house, instead of a box */
   #on-leave { position: relative; border-color: transparent; padding: 6px 14px; display: inline-flex; align-items: center; justify-content: center; min-width: 52px; min-height: 40px; }
   #on-leave .home-ring { position: absolute; inset: -3px -4px; width: calc(100% + 8px); height: calc(100% + 6px); fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
-  #on-leave .home-house { width: 26px; height: 26px; fill: none; stroke: var(--red); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .is-online .tally-mini:empty { display: none; }
+  #on-leave .home-ring { display: none; }
+  #on-leave .home-house { width: 30px; height: 30px; fill: none; stroke: var(--red); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .is-online .tally-mini:empty, .mode-cpu .tally-mini { display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .is-online #on-tally { display: none !important; }
   .is-online #on-live { display: flex; flex-direction: column; }
   .is-online #on-live .row { order: 1; }
@@ -324,6 +326,7 @@
   }
   input.score:focus { outline: none; border-color: var(--red); }
   .score.auto { border-style: dashed; }
+  .is-online .score.auto { border-style: solid; } /* in games every number is worked out, so they all match */
   .del { width: 22px; height: 26px; flex: none; margin-left: -4px; padding: 0; background: none; border: 0; cursor: pointer; display: grid; place-items: center; opacity: .55; }
   .del:active { transform: translateY(1px); opacity: 1; }
   .del svg { width: 16px; height: 20px; }
@@ -464,7 +467,7 @@
   <p class="myword-note" id="myword-note" hidden>No double letters in your word. Pick one where every letter is different.</p>
 
   <div class="head after-word">
-    <h2>Alphabet</h2>
+    <h2 class="sr-only">Alphabet</h2>
     <button class="info" type="button" aria-expanded="false" aria-controls="note-alpha" aria-label="How the alphabet works">i</button>
     <button class="pen-btn small az-btn" id="focus" type="button" aria-pressed="false" aria-label="Hide the letters you've ruled out"><span>A–Z</span><svg viewBox="0 0 40 24" aria-hidden="true"><path d="M3 20 L37 4"/></svg></button>
   </div>
@@ -595,6 +598,8 @@
     if (g && g.mine) trimRows(g.mine);
     if (g && g.theirs) trimRows(g.theirs);
   });
+  // Words are 3 to 6 letters. If 7 or 8 was picked before, drop back to 6.
+  if (!(root.len >= 3 && root.len <= 6)) root.len = Math.min(6, Math.max(3, +root.len || 5));
   var LEN = root.len;
   var state = root.games[LEN] || (root.games[LEN] = blank(LEN));
   function save() { try { localStorage.setItem(KEY, JSON.stringify(root)); } catch (e) {} }
@@ -617,7 +622,7 @@
 
   // Word-length tabs
   var lengths = document.getElementById('lengths');
-  [3, 4, 5, 6, 7, 8].forEach(function (n) {
+  [3, 4, 5, 6].forEach(function (n) {
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'len'; b.dataset.len = n;
     b.setAttribute('role', 'radio'); b.setAttribute('aria-label', n + ' letters');
@@ -756,7 +761,7 @@
     circle.querySelectorAll('.found, .empty').forEach(function (n) { n.remove(); });
     if (!state.order.length) {
       var e = document.createElement('p'); e.className = 'empty';
-      e.textContent = 'Letters you know are in their word';
+      e.textContent = 'Letters you know';
       circle.appendChild(e);
     }
     state.order.forEach(function (l) {
@@ -1482,7 +1487,7 @@
     if (v.winner) known = mineW.split('');
     if (!known.length) {
       var e = document.createElement('p'); e.className = 'empty';
-      e.textContent = 'Letters the computer knows are in your word';
+      e.textContent = 'Letters they know';
       box.appendChild(e); return;
     }
     known.forEach(function (l) {
